@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS | Vicios & Sabores</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="img/logo1.png" type="image/jpeg"> 
+</head>
+<body>
+
+    <header class="header">
+        <h1>🔥 VICIOS & SABORES - POS</h1>
+        <link rel="icon" href="img/logo1.png" type="image/jpeg">    
+         
+        <div class="caja-chica-display" onclick="modificarCajaChica()" title="Clic para modificar">
+            💰 <span id="lbl-caja-chica-header">Caja: 0 Bs</span>
+        </div>
+
+        <div class="header-btns">
+            <button class="btn-top" onclick="abrirHistorialDias()">📅 Días Pasados</button>
+            <button class="btn-top btn-gastos" onclick="abrirGastos()">💸 Gastos</button>
+            <button class="btn-top btn-historial-hoy" onclick="verHistorialHoy()">📋 Historial Hoy</button>
+            <button class="btn-top btn-cierre" onclick="abrirCierreCaja()">🚨 Cierre Hoy</button>
+            <button class="btn-top" style="background:#dc3545; border-color:#fff;" onclick="cerrarSesion()">Salir</button>
+        </div>
+    </header>
+
+    <div class="pos-container">
+        <div class="menu-panel">
+            <div class="categoria">
+                <h2>🍗 ALITAS (Distribución Estricta)</h2>
+                <div class="botones-grid">
+                    <button class="btn-item" onclick="abrirModalDinamico('Alitas 4 Pz', 18, {tipo: 'alitas', piezas: 4})">Alitas 4 Pz <span class="precio">18 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Alitas 6 Pz', 25, {tipo: 'alitas', piezas: 6})">Alitas 6 Pz <span class="precio">25 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Alitas 8 Pz', 30, {tipo: 'alitas', piezas: 8})">Alitas 8 Pz <span class="precio">30 Bs</span></button>
+                </div>
+            </div>
+
+            <div class="categoria">
+                <h2>🍗 POLLO BROASTER</h2>
+                <div class="botones-grid">
+                    <button class="btn-item" onclick="abrirModalDinamico('Económico ⅛ (15 Bs)', 15, {tipo: 'presa', opciones: ['Pierna', 'Entre Pierna']})">Económico ⅛ <br><small>Pierna / Entre Pierna</small> <span class="precio">15 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Económico ⅛ (17 Bs)', 17, {tipo: 'presa', opciones: ['Pecho', 'Ala']})">Económico ⅛ <br><small>Pecho / Ala</small> <span class="precio">17 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Cuarto de Pollo (Pierna y Entre Pierna)', 24, {tipo: 'normal'})">Cuarto de Pollo <br><small>Pierna y Entre Pierna</small> <span class="precio">24 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Cuarto de Pollo (Pecho y Ala)', 26, {tipo: 'normal'})">Cuarto de Pollo <br><small>Pecho y Ala</small> <span class="precio">26 Bs</span></button>
+                </div>
+            </div>
+
+            <div class="categoria">
+                <h2>🍳 SILPANCHO Y PLATOS</h2>
+                <div class="botones-grid">
+                    <button class="btn-item" onclick="abrirModalDinamico('Silpancho de Res', 15, {tipo: 'normal'})">Silpancho de Res <span class="precio">15 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Silpancho de Pollo', 15, {tipo: 'normal'})">Silpancho de Pollo <span class="precio">15 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Silpancho con 2 Huevos', 17, {tipo: 'normal'})">Silpancho con 2 Huevos <span class="precio">17 Bs</span></button>
+                    
+                    <button class="btn-item" onclick="abrirModalDinamico('Trancapecho', 12, {tipo: 'normal'})">Trancapecho <span class="precio">12 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Milanesa', 15, {tipo: 'normal'})">Milanesa <span class="precio">15 Bs</span></button>
+                </div>
+            </div>
+
+            <div class="categoria">
+                <h2>🍹 REFRESCOS PREPARADOS</h2>
+                <div class="botones-grid">
+                    <button class="btn-item" onclick="abrirModalDinamico('Vaso', 3, {tipo: 'refresco'})">Vaso <span class="precio">3 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Jarra 1 ½ Litros', 10, {tipo: 'refresco'})">Jarra 1 ½ Litros <span class="precio">10 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Jarra 2 ½ Litros', 15, {tipo: 'refresco'})">Jarra 2 ½ Litros <span class="precio">15 Bs</span></button>
+                </div>
+            </div>
+
+            <div class="categoria">
+                <h2>🥤 BOTELLAS</h2>
+                <div class="botones-grid">
+                    <button class="btn-item" onclick="abrirModalDinamico('Coca Cola Mini', 3, {tipo: 'normal'})">Coca Cola Mini <span class="precio">3 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Coca Cola Popular', 8, {tipo: 'normal'})">Coca Cola Popular <span class="precio">8 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Coca Cola 2 Litros', 15, {tipo: 'normal'})">Coca Cola 2 Litros <span class="precio">15 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Del Sol 620 ML', 10, {tipo: 'normal'})">Del Sol 620 ML <span class="precio">10 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Del Sol 1 Litro', 15, {tipo: 'normal'})">Del Sol 1 Litro <span class="precio">15 Bs</span></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="ticket-panel">
+            <div class="ticket-header">
+                <h2>🛒 Ticket Actual</h2>
+                <button class="btn-ctrl red" style="width: auto; padding: 2px 10px; font-size:0.9rem;" onclick="vaciarTicket()">🗑️ Vaciar</button>
+            </div>
+            
+            <div class="ticket-items" id="lista-ticket"></div>
+
+            <div class="checkout-section">
+                <select id="tipo-pedido" class="form-select" style="margin-bottom: 10px; padding: 8px; font-size: 1.1rem; border-color:#000;">
+                    <option value="Mesa">🍽️ Para Servirse (Mesa)</option>
+                    <option value="Llevar">🛍️ Para Llevar</option>
+                </select>
+
+                <div class="ticket-total"><span>TOTAL:</span><span id="monto-total">0 Bs.</span></div>
+
+                <div class="metodo-pago">
+                    <input type="radio" name="metodo" id="pago-efectivo" value="Efectivo" checked onchange="togglePago()">
+                    <label for="pago-efectivo">💵 EFECTIVO</label>
+
+                    <input type="radio" name="metodo" id="pago-qr" value="QR" onchange="togglePago()">
+                    <label for="pago-qr">📱 QR</label>
+
+                    <input type="radio" name="metodo" id="pago-mixto" value="Mixto" onchange="togglePago()">
+                    <label for="pago-mixto">💵+📱 MIXTO</label>
+                </div>
+
+                <div class="qr-container" id="caja-qr" onclick="abrirQRFlotante()" title="Haz clic para agrandar el QR">
+                    <p style="font-size: 0.9rem; margin-bottom: 5px; color:#333; font-weight:bold;">¡Tócalo para agrandar!</p>
+                    <img src="img/qr.jpg" alt="QR Banco" class="qr-img" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg'">
+                </div>
+
+                <div class="calculo-vuelto" id="caja-vuelto">
+                    <div class="input-group" style="color:#000;">
+                        <label>Pagó con:</label>
+                        <input type="number" id="monto-recibido" placeholder="0" oninput="calcularVuelto()">
+                    </div>
+                    <div class="input-group" style="color: #008000; font-size: 1.3rem;">
+                        <label>Vuelto:</label><span id="monto-vuelto">0 Bs.</span>
+                    </div>
+                </div>
+
+                <div class="calculo-vuelto" id="caja-mixto" style="display: none; border-top: 1px dashed #ccc; padding-top:10px;">
+                    <div class="input-group" style="color:#000; margin-bottom:5px;">
+                        <label>Monto en QR:</label>
+                        <input type="number" id="monto-mixto-qr" placeholder="0" oninput="calcularVuelto()">
+                    </div>
+                    <div class="input-group" style="color:#000;">
+                        <label>Monto en Efectivo:</label>
+                        <input type="number" id="monto-mixto-efectivo" placeholder="0" oninput="calcularVuelto()">
+                    </div>
+                    <div class="input-group" style="color: #008000; font-size: 1.2rem; margin-top:5px;">
+                        <label>Estado:</label><span id="monto-mixto-estado">0 Bs.</span>
+                    </div>
+                    <button class="btn-top" style="margin-top:10px; background:#128C7E; color:white; width:100%; border:none;" onclick="abrirQRFlotante()">📱 Ver QR para cobrar</button>
+                </div>
+
+                <button class="btn-cobrar" id="btn-cobrar" onclick="procesarPago()" disabled>🛒 COBRAR PEDIDO</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modales-container"></div>
+    <script src="app.js"></script>
+</body>
+</html>

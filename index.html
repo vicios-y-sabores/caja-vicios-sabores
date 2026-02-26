@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Vicios & Sabores</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="img/logo1.png" type="image/jpeg"> 
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Oswald', sans-serif; }
+        body { background-color: #050505; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; background-image: radial-gradient(circle at center, #3a0d00 0%, #050505 100%); }
+        .login-box { background: rgba(0, 0, 0, 0.8); border: 2px solid #ff4500; padding: 40px; border-radius: 15px; text-align: center; width: 100%; max-width: 400px; box-shadow: 0 0 30px rgba(255, 69, 0, 0.4); }
+        .login-box h1 { color: #ffd700; text-shadow: 0 0 10px #ff4500; margin-bottom: 30px; font-size: 2.5rem; letter-spacing: 2px; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; color: #ffaa00; font-size: 1.2rem; }
+        .input-group input { width: 100%; padding: 12px; font-size: 1.2rem; border: 1px solid #ff8c00; border-radius: 5px; background: #222; color: #fff; }
+        .input-group input:focus { outline: none; border-color: #ff0000; box-shadow: 0 0 10px rgba(255,0,0,0.5); }
+        .btn-login { background: #ff4500; color: white; border: none; width: 100%; padding: 15px; border-radius: 5px; font-size: 1.5rem; cursor: pointer; transition: 0.3s; font-weight: bold; margin-top: 10px; }
+        .btn-login:hover { background: #ff0000; transform: scale(1.05); }
+        .error-msg { color: #ff4500; margin-top: 15px; display: none; font-weight: bold; }
+        .restablecer { margin-top: 20px; display: block; color: #aaa; text-decoration: underline; cursor: pointer; font-family: sans-serif; font-size: 0.9rem; }
+        .restablecer:hover { color: #fff; }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <h1>🔥 VICIOS & SABORES</h1>
+        <div class="input-group">
+            <label>👤 Usuario:</label>
+            <input type="text" id="username" placeholder="Ingresa tu usuario">
+        </div>
+        <div class="input-group">
+            <label>🔑 Contraseña:</label>
+            <input type="password" id="password" placeholder="Ingresa tu contraseña">
+        </div>
+        <button class="btn-login" onclick="iniciarSesion()">ENTRAR</button>
+        <p class="error-msg" id="error-login">Usuario o contraseña incorrectos</p>
+        
+        <span class="restablecer" onclick="restablecerPass()">¿Olvidaste la contraseña?</span>
+    </div>
+
+    <script>
+        // Bases de datos de usuarios (Simulada para entorno local)
+        const usuarios = {
+            "alejandro": { pass: "admin123", rol: "admin", nombre: "Alejandro (Admin)" },
+            "caja1": { pass: "vicios2026", rol: "cajero", nombre: "Caja Principal" }
+        };
+
+        function iniciarSesion() {
+            let user = document.getElementById('username').value.trim().toLowerCase();
+            let pass = document.getElementById('password').value.trim();
+            let errorMsg = document.getElementById('error-login');
+
+            if (usuarios[user] && usuarios[user].pass === pass) {
+                // Guardamos la sesión iniciada
+                sessionStorage.setItem('vicios_usuarioActivo', JSON.stringify(usuarios[user]));
+                window.location.href = 'caja.html'; // Redirigir al POS
+            } else {
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        function restablecerPass() {
+            alert("Para restablecer tu contraseña, comunícate con el Administrador (Alejandro) al 79960163.");
+        }
+    </script>
+</body>
+</html>
