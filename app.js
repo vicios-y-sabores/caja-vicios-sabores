@@ -122,6 +122,31 @@ window.onload = function() {
         document.querySelector('.caja-chica-display').title = 'Modificación solo para Administradores';
     }
 
+    // --- RECUPERACIÓN DEL DÍA 24/02/2026 ---
+    let existe24 = historialDias.find(d => d.fecha === "24/02/2026");
+    if (!existe24) {
+        historialDias.push({
+            fecha: "24/02/2026",
+            cajaChica: 0,
+            efectivo: 194,
+            qr: 162,
+            total: 356,
+            resumenPlatos: "3x Económico ⅛ (Pecho), 10x Silpancho de Res, 2x Jarra 2 ½ Litros (Limón), 2x Jarra 1 ½ Litros (Maracuyá), 1x Alitas 8 Pz, 5x Económico ⅛ (Pierna)",
+            gastosArr: [],
+            ventasArr: [
+                { id: 201, hora: "09:59 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 34, montoQR: 0, total: 34, anulada: false, items: [{cantidad: 2, nombre: "Económico ⅛ (Pecho)", precio: 17}] },
+                { id: 202, hora: "09:42 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 15, montoQR: 0, total: 15, anulada: false, items: [{cantidad: 1, nombre: "Económico ⅛ (Pierna)", precio: 15}] },
+                { id: 203, hora: "09:30 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 30, montoQR: 0, total: 30, anulada: false, items: [{cantidad: 1, nombre: "Económico ⅛ (Pierna)", precio: 15}, {cantidad: 1, nombre: "Silpancho de Res", precio: 15}] },
+                { id: 204, hora: "08:55 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 15, montoQR: 0, total: 15, anulada: false, items: [{cantidad: 1, nombre: "Silpancho de Res", precio: 15}] },
+                { id: 205, hora: "08:52 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 30, montoQR: 0, total: 30, anulada: false, items: [{cantidad: 2, nombre: "Económico ⅛ (Pierna)", precio: 15}] },
+                { id: 206, hora: "08:50 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 70, montoQR: 0, total: 70, anulada: false, items: [{cantidad: 1, nombre: "Alitas 8 Pz", precio: 30}, {cantidad: 1, nombre: "Económico ⅛ (Pierna)", precio: 15}, {cantidad: 1, nombre: "Silpancho de Res", precio: 15}, {cantidad: 1, nombre: "Jarra 1 ½ Litros (Maracuyá)", precio: 10}] },
+                { id: 207, hora: "08:34 p. m.", tipoLugar: "Mesa", metodo: "QR", montoEfectivo: 0, montoQR: 55, total: 55, anulada: false, items: [{cantidad: 3, nombre: "Silpancho de Res", precio: 15}, {cantidad: 1, nombre: "Jarra 1 ½ Litros (Maracuyá)", precio: 10}] },
+                { id: 208, hora: "08:20 p. m.", tipoLugar: "Mesa", metodo: "QR", montoEfectivo: 0, montoQR: 107, total: 107, anulada: false, items: [{cantidad: 1, nombre: "Económico ⅛ (Pecho)", precio: 17}, {cantidad: 4, nombre: "Silpancho de Res", precio: 15}, {cantidad: 2, nombre: "Jarra 2 ½ Litros (Limón)", precio: 15}] }
+            ]
+        });
+        localStorage.setItem('vicios_historialDias', JSON.stringify(historialDias));
+    }
+
     // --- RECUPERACIÓN DEL DÍA 25/02/2026 ---
     let existe25 = historialDias.find(d => d.fecha === "25/02/2026");
     if (!existe25) {
@@ -134,7 +159,6 @@ window.onload = function() {
             resumenPlatos: "7x Alitas 4 Pz, 2x Alitas 6 Pz, 1x Alitas 8 Pz, 12x Silpancho de Res, 1x Silpancho con 2 Huevos, 4x Milanesa, 2x Económico ⅛ (Pierna), 1x Económico ⅛ (Pecho), 1x Económico ⅛ (Entre Pierna), 1x Económico ⅛ (Ala), 1x Cuarto de Pollo (Pecho y Ala), 6x Jarra 1 ½ Litros (Maracuyá), 3x Vaso (Maracuyá), 3x Vaso (Limón)",
             gastosArr: [ { id: 1, detalle: "Gastos registrados del día", monto: 25 } ], 
             ventasArr: [
-                // Resumen general inyectado para respaldo (Las matemáticas cuadran exacto con el PDF)
                 { id: 101, hora: "11:01 p. m.", tipoLugar: "Llevar", metodo: "Efectivo", montoEfectivo: 45, montoQR: 0, total: 45, anulada: false, items: [{cantidad: 2, nombre: "Silpancho de Res", precio: 15}, {cantidad: 1, nombre: "Milanesa", precio: 15}] },
                 { id: 102, hora: "10:52 p. m.", tipoLugar: "Mesa", metodo: "Mixto (Ef: 28 / QR: 25)", montoEfectivo: 28, montoQR: 25, total: 53, anulada: false, items: [{cantidad: 2, nombre: "Alitas 6 Pz", precio: 25}, {cantidad: 1, nombre: "Vaso (Maracuyá)", precio: 3}] },
                 { id: 103, hora: "10:42 p. m.", tipoLugar: "Llevar", metodo: "Efectivo", montoEfectivo: 15, montoQR: 0, total: 15, anulada: false, items: [{cantidad: 1, nombre: "Silpancho de Res", precio: 15}] },
@@ -145,6 +169,15 @@ window.onload = function() {
         });
         localStorage.setItem('vicios_historialDias', JSON.stringify(historialDias));
     }
+
+    // --- ORDENAR EL HISTORIAL POR FECHA ---
+    historialDias.sort((a, b) => {
+        let partsA = a.fecha.split('/');
+        let partsB = b.fecha.split('/');
+        let dateA = new Date(partsA[2], partsA[1] - 1, partsA[0]);
+        let dateB = new Date(partsB[2], partsB[1] - 1, partsB[0]);
+        return dateA - dateB;
+    });
 
     if (!estadoCaja.abierta) {
         document.getElementById('modal-apertura').style.display = 'flex';
