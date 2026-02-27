@@ -25,6 +25,14 @@ let nombreItemBase = "";
 let precioBase = 0;
 let diaVisualizando = null; // Para reenviar reportes pasados
 
+function actualizarTituloFicha() {
+    let nroFicha = estadoCaja.siguienteFicha || 1;
+    let titulo = document.getElementById('titulo-ticket');
+    if (titulo) {
+        titulo.innerHTML = `🛒 Ticket Actual <span style="color:#ff4500;">(Ficha #${nroFicha})</span>`;
+    }
+}
+
 // Estructura de Modales inyectada
 document.getElementById('modales-container').innerHTML = `
     <div class="modal-overlay" id="modal-apertura">
@@ -120,6 +128,7 @@ window.onload = function() {
         document.querySelector('.caja-chica-display').onclick = null;
         document.querySelector('.caja-chica-display').style.cursor = 'default';
         document.querySelector('.caja-chica-display').title = 'Modificación solo para Administradores';
+        
     }
 
     // --- RECUPERACIÓN DEL DÍA 24/02/2026 ---
@@ -168,6 +177,7 @@ window.onload = function() {
             ]
         });
         localStorage.setItem('vicios_historialDias', JSON.stringify(historialDias));
+        actualizarTituloFicha();
     }
 
     // --- ORDENAR EL HISTORIAL POR FECHA ---
@@ -198,6 +208,7 @@ function abrirCaja() {
     localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy));
     localStorage.setItem('vicios_gastosHoy', JSON.stringify(gastosHoy));
     actualizarHeaderCaja();
+    actualizarTituloFicha();
     cerrarModales();
 }
 
@@ -391,6 +402,7 @@ function procesarPago() {
         items: JSON.parse(JSON.stringify(pedidoActual)) 
     });
     estadoCaja.siguienteFicha = nroFicha + 1;
+    actualizarTituloFicha();
     localStorage.setItem('vicios_estadoCaja', JSON.stringify(estadoCaja));
     localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy));
 
@@ -446,7 +458,8 @@ function abrirCierreCaja(esHistorico = false, historicoData = null, modoSoloVist
 
     const tbody = document.querySelector('#tabla-ventas-hoy tbody'); tbody.innerHTML = '';
     vRender.forEach(v => {
-         let textoFicha = v.ficha ? ` - Ficha #${v.ficha}` : '';
+        // Le agregamos la ficha al texto de MESA o LLEVAR
+        let textoFicha = v.ficha ? ` - Ficha #${v.ficha}` : '';
         let etiquetaMesa = v.tipoLugar ? `<strong>[${v.tipoLugar.toUpperCase()}${textoFicha}]</strong><br>` : '';
         let txtItems = etiquetaMesa + v.items.map(i => `${i.cantidad}x ${i.nombre}${i.nota ? `<br><small style="color:#d35400;">(${i.nota})</small>`:''}`).join('<br>');
         let btnAccion = (!esHistorico && !v.anulada) ? `<button class="btn-ctrl red" onclick="anularVenta(${v.id})" title="Anular">🗑️</button>` : (v.anulada ? 'Anulada' : 'Cerrada');
@@ -574,4 +587,5 @@ function reenviarWhatsAppHistorico() {
         }, 3000);
     }, 100);
 }
+
 
