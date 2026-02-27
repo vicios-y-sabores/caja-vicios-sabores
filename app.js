@@ -13,7 +13,7 @@ function cerrarSesion() {
 }
 
 // --- BASE DE DATOS LOCAL ---
-let estadoCaja = JSON.parse(localStorage.getItem('vicios_estadoCaja')) || { abierta: false, cajaChica: 0 };
+let estadoCaja = JSON.parse(localStorage.getItem('vicios_estadoCaja')) || { abierta: false, cajaChica: 0, siguienteFicha: 1 };
 let ventasHoy = JSON.parse(localStorage.getItem('vicios_ventasHoy')) || [];
 let gastosHoy = JSON.parse(localStorage.getItem('vicios_gastosHoy')) || [];
 let historialDias = JSON.parse(localStorage.getItem('vicios_historialDias')) || [];
@@ -192,7 +192,7 @@ function actualizarHeaderCaja() {
 
 function abrirCaja() {
     let monto = parseFloat(document.getElementById('input-caja-chica').value) || 0;
-    estadoCaja = { abierta: true, cajaChica: monto };
+    estadoCaja = { abierta: true, cajaChica: monto, siguienteFicha: 1 };
     ventasHoy = []; gastosHoy = [];
     localStorage.setItem('vicios_estadoCaja', JSON.stringify(estadoCaja));
     localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy));
@@ -355,12 +355,14 @@ function calcularVuelto() {
 }
 
 function procesarPago() {
+    
     let tipoLugar = document.getElementById('tipo-pedido').value;
     let esEfectivo = document.getElementById('pago-efectivo').checked;
     let esQR = document.getElementById('pago-qr').checked;
     let esMixto = document.getElementById('pago-mixto').checked;
     
     let pagoEf = 0; let pagoQR = 0; let metodoTxt = "";
+    let nroFicha = estadoCaja.siguienteFicha || 1;
 
     if (esEfectivo) {
         let recibido = parseFloat(document.getElementById('monto-recibido').value) || 0;
@@ -380,7 +382,7 @@ function procesarPago() {
         metodoTxt = `Mixto (Ef: ${pagoEf} / QR: ${pagoQR})`;
     }
 
-    if (!confirm(`✅ ¿Registrar venta por ${totalActual} Bs?\n\nPedido: ${tipoLugar}`)) return;
+    if (!confirm(`✅ ¿Registrar venta por ${totalActual} Bs?\n\n🎫 FICHA: #${nroFicha}\nPedido: ${tipoLugar}`)) return;
 
     ventasHoy.push({ 
         id: Date.now(), hora: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
@@ -388,6 +390,8 @@ function procesarPago() {
         montoEfectivo: pagoEf, montoQR: pagoQR, total: totalActual, anulada: false, 
         items: JSON.parse(JSON.stringify(pedidoActual)) 
     });
+    estadoCaja.siguienteFicha = nroFicha + 1;
+    localStorage.setItem('vicios_estadoCaja', JSON.stringify(estadoCaja));
     localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy));
 
     pedidoActual = []; document.getElementById('monto-recibido').value = ''; 
@@ -442,7 +446,8 @@ function abrirCierreCaja(esHistorico = false, historicoData = null, modoSoloVist
 
     const tbody = document.querySelector('#tabla-ventas-hoy tbody'); tbody.innerHTML = '';
     vRender.forEach(v => {
-        let etiquetaMesa = v.tipoLugar ? `<strong>[${v.tipoLugar.toUpperCase()}]</strong><br>` : '';
+         let textoFicha = v.ficha ? ` - Ficha #${v.ficha}` : '';
+        let etiquetaMesa = v.tipoLugar ? `<strong>[${v.tipoLugar.toUpperCase()}${textoFicha}]</strong><br>` : '';
         let txtItems = etiquetaMesa + v.items.map(i => `${i.cantidad}x ${i.nombre}${i.nota ? `<br><small style="color:#d35400;">(${i.nota})</small>`:''}`).join('<br>');
         let btnAccion = (!esHistorico && !v.anulada) ? `<button class="btn-ctrl red" onclick="anularVenta(${v.id})" title="Anular">🗑️</button>` : (v.anulada ? 'Anulada' : 'Cerrada');
         tbody.innerHTML = `<tr class="${v.anulada ? 'tr-anulada':''}"><td style="color:#000;">${v.hora}</td><td style="color:#000;">${txtItems}</td><td style="color:#000;">${v.metodo}</td><td style="color:#000; font-weight:bold;">${v.total} Bs</td><td class="col-accion">${btnAccion}</td></tr>` + tbody.innerHTML; 
@@ -508,10 +513,10 @@ function enviarWhatsAppYGuardar() {
 
             let url = `https://wa.me/59179962454?text=${encodeURIComponent(textoWA)}`;
             
-            estadoCaja.abierta = false; estadoCaja.cajaChica = 0; ventasHoy = []; gastosHoy = [];
+            estadoCaja.abierta = false; estadoCaja.cajaChica = 0; estadoCaja.siguienteFicha = 1; ventasHoy = []; gastosHoy = [];
             localStorage.setItem('vicios_estadoCaja', JSON.stringify(estadoCaja)); localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy)); localStorage.setItem('vicios_gastosHoy', JSON.stringify(gastosHoy));
             
-            window.open(url, '_blank'); window.location.reload(); 
+           window.location.href = url; 
         }, 3000);
     }, 100); 
 }
@@ -569,3 +574,4 @@ function reenviarWhatsAppHistorico() {
         }, 3000);
     }, 100);
 }
+
