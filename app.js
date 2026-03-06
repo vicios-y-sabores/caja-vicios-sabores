@@ -48,8 +48,16 @@ document.getElementById('modales-container').innerHTML = `
         <div class="modal">
             <h2 id="modal-dinamico-titulo">Detalles</h2>
             <div id="modal-dinamico-contenido"></div>
-            <p style="margin-top: 15px; font-weight: bold; color: #333;">Nota especial (Opcional):</p>
+            
+            <p style="margin-top: 15px; font-weight: bold; color: #333;">Tipo de consumo (Plato):</p>
+            <select id="modal-dinamico-tipo-consumo" class="form-select" style="margin-bottom: 10px;">
+                <option value="Mesa">🍽️ Para Servirse (Mesa)</option>
+                <option value="Llevar">🛍️ Para Llevar</option>
+            </select>
+
+            <p style="margin-top: 5px; font-weight: bold; color: #333;">Nota especial (Opcional):</p>
             <input type="text" id="modal-dinamico-nota" class="input-grande" placeholder="Ej: Bien dorado, sin llajua...">
+            
             <button class="btn-accion" onclick="confirmarItemDinamico()">✔️ Agregar al Pedido</button>
             <button class="btn-accion btn-cancelar" onclick="cerrarModales()">❌ Cancelar</button>
         </div>
@@ -253,6 +261,7 @@ function abrirModalDinamico(nombre, precioBaseParam, config) {
     cfgActual = config; nombreItemBase = nombre; precioBase = precioBaseParam;
     document.getElementById('modal-dinamico-titulo').innerText = nombre;
     document.getElementById('modal-dinamico-nota').value = "";
+    document.getElementById('modal-dinamico-tipo-consumo').value = "Mesa"; // Valor predeterminado
     let contenidoHTML = "";
 
     if (config.tipo === 'alitas') {
@@ -277,6 +286,7 @@ function abrirModalDinamico(nombre, precioBaseParam, config) {
 
 function confirmarItemDinamico() {
     let detalle = ""; let nombreFinal = nombreItemBase;
+    let tipoConsumo = document.getElementById('modal-dinamico-tipo-consumo').value;
 
     if (cfgActual.tipo === 'alitas') {
         if (cfgActual.piezas === 4) {
@@ -297,7 +307,7 @@ function confirmarItemDinamico() {
     let notaInput = document.getElementById('modal-dinamico-nota').value.trim();
     if (notaInput) detalle += (detalle ? " | " : "") + notaInput;
 
-    agregarAlPedido(nombreFinal, precioBase, detalle);
+    agregarAlPedido(nombreFinal, precioBase, detalle, tipoConsumo);
     cerrarModales();
 }
 
@@ -306,9 +316,9 @@ function abrirQRFlotante() { if(totalActual>0){document.getElementById('qr-total
 function cerrarQRFlotante() { document.getElementById('modal-qr-flotante').style.display = 'none'; }
 
 // Carrito
-function agregarAlPedido(nombre, precio, nota) {
-    let index = pedidoActual.findIndex(i => i.nombre === nombre && i.nota === nota);
-    if (index > -1) pedidoActual[index].cantidad++; else pedidoActual.push({ nombre, precio, nota, cantidad: 1, id: Date.now() + Math.random() });
+function agregarAlPedido(nombre, precio, nota, tipoConsumo = "Mesa") {
+    let index = pedidoActual.findIndex(i => i.nombre === nombre && i.nota === nota && i.tipoConsumo === tipoConsumo);
+    if (index > -1) pedidoActual[index].cantidad++; else pedidoActual.push({ nombre, precio, nota, tipoConsumo, cantidad: 1, id: Date.now() + Math.random() });
     renderizarTicket();
 }
 function quitarDelPedido(id) {
@@ -324,7 +334,8 @@ function renderizarTicket() {
     pedidoActual.forEach(item => {
         let subtotal = item.cantidad * item.precio; totalActual += subtotal;
         let htmlNota = item.nota ? `<span class="nota-item">📌 ${item.nota}</span>` : '';
-        lista.innerHTML += `<div class="ticket-row"><div class="row-main"><div class="info"><span class="nombre">${item.nombre}</span><span>${item.cantidad}x ${item.precio} Bs = ${subtotal} Bs</span>${htmlNota}</div><div class="controles"><button class="btn-ctrl red" onclick="quitarDelPedido(${item.id})">-</button><span>${item.cantidad}</span><button class="btn-ctrl" onclick="agregarAlPedido('${item.nombre}', ${item.precio}, '${item.nota}')">+</button></div></div></div>`;
+        let htmlTipo = item.tipoConsumo ? `<span style="color:#005580; font-size:0.85rem; font-weight:bold;">[${item.tipoConsumo}]</span> ` : '';
+        lista.innerHTML += `<div class="ticket-row"><div class="row-main"><div class="info"><span class="nombre">${htmlTipo}${item.nombre}</span><span>${item.cantidad}x ${item.precio} Bs = ${subtotal} Bs</span>${htmlNota}</div><div class="controles"><button class="btn-ctrl red" onclick="quitarDelPedido(${item.id})">-</button><span>${item.cantidad}</span><button class="btn-ctrl" onclick="agregarAlPedido('${item.nombre}', ${item.precio}, '${item.nota}', '${item.tipoConsumo}')">+</button></div></div></div>`;
     });
     document.getElementById('monto-total').innerText = totalActual + ' Bs.';
     document.getElementById('btn-cobrar').disabled = totalActual === 0;
@@ -393,10 +404,10 @@ function procesarPago() {
         metodoTxt = `Mixto (Ef: ${pagoEf} / QR: ${pagoQR})`;
     }
 
-    if (!confirm(`✅ ¿Registrar venta por ${totalActual} Bs?\n\n🎫 FICHA: #${nroFicha}\nPedido: ${tipoLugar}`)) return;
+    if (!confirm(`✅ ¿Registrar venta por ${totalActual} Bs?\n\n🎫 FICHA: #${nroFicha}\nPedido General: ${tipoLugar}`)) return;
 
     ventasHoy.push({ 
-        id: Date.now(), hora: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
+        id: Date.now(), ficha: nroFicha, hora: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
         tipoLugar: tipoLugar, metodo: metodoTxt, 
         montoEfectivo: pagoEf, montoQR: pagoQR, total: totalActual, anulada: false, 
         items: JSON.parse(JSON.stringify(pedidoActual)) 
@@ -458,10 +469,14 @@ function abrirCierreCaja(esHistorico = false, historicoData = null, modoSoloVist
 
     const tbody = document.querySelector('#tabla-ventas-hoy tbody'); tbody.innerHTML = '';
     vRender.forEach(v => {
-        // Le agregamos la ficha al texto de MESA o LLEVAR
+        
         let textoFicha = v.ficha ? ` - Ficha #${v.ficha}` : '';
         let etiquetaMesa = v.tipoLugar ? `<strong>[${v.tipoLugar.toUpperCase()}${textoFicha}]</strong><br>` : '';
-        let txtItems = etiquetaMesa + v.items.map(i => `${i.cantidad}x ${i.nombre}${i.nota ? `<br><small style="color:#d35400;">(${i.nota})</small>`:''}`).join('<br>');
+        let txtItems = etiquetaMesa + v.items.map(i => {
+            let tipoC = i.tipoConsumo ? ` <span style="color:#005580; font-size:0.85rem;">[${i.tipoConsumo}]</span>` : '';
+            return `${i.cantidad}x ${i.nombre}${tipoC}${i.nota ? `<br><small style="color:#d35400;">(${i.nota})</small>`:''}`
+        }).join('<br>');
+        
         let btnAccion = (!esHistorico && !v.anulada) ? `<button class="btn-ctrl red" onclick="anularVenta(${v.id})" title="Anular">🗑️</button>` : (v.anulada ? 'Anulada' : 'Cerrada');
         tbody.innerHTML = `<tr class="${v.anulada ? 'tr-anulada':''}"><td style="color:#000;">${v.hora}</td><td style="color:#000;">${txtItems}</td><td style="color:#000;">${v.metodo}</td><td style="color:#000; font-weight:bold;">${v.total} Bs</td><td class="col-accion">${btnAccion}</td></tr>` + tbody.innerHTML; 
     });
@@ -587,5 +602,3 @@ function reenviarWhatsAppHistorico() {
         }, 3000);
     }, 100);
 }
-
-
