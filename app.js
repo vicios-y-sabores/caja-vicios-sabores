@@ -280,6 +280,10 @@ function abrirModalDinamico(nombre, precioBaseParam, config) {
     else if (config.tipo === 'refresco') {
         contenidoHTML += `<p style="font-weight:bold; margin-bottom:5px; color:#333;">Elige el sabor:</p><select class="form-select" id="cmb-refresco"><option value="Maracuyá">Maracuyá</option><option value="Limón">Limón</option><option value="Canela">Canela</option></select>`;
     }
+    else if (config.tipo === 'gaseosa') {
+        contenidoHTML += `<p style="font-weight:bold; margin-bottom:5px; color:#333;">Elige el sabor:</p><select class="form-select" id="cmb-gaseosa"><option value="Coca Cola">Coca Cola</option><option value="Fanta">Fanta</option><option value="Sprite">Sprite</option></select>`;
+    }
+    
     document.getElementById('modal-dinamico-contenido').innerHTML = contenidoHTML;
     document.getElementById('modal-dinamico').style.display = 'flex';
 }
@@ -303,6 +307,7 @@ function confirmarItemDinamico() {
     } 
     else if (cfgActual.tipo === 'presa') { nombreFinal = `${nombreItemBase.split(' (')[0]} (${document.getElementById('cmb-presa').value})`; } 
     else if (cfgActual.tipo === 'refresco') { nombreFinal += ` (${document.getElementById('cmb-refresco').value})`; }
+    else if (cfgActual.tipo === 'gaseosa') { nombreFinal += ` (${document.getElementById('cmb-gaseosa').value})`; }
 
     let notaInput = document.getElementById('modal-dinamico-nota').value.trim();
     if (notaInput) detalle += (detalle ? " | " : "") + notaInput;
