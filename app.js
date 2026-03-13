@@ -1,9 +1,7 @@
 // --- SISTEMA DE LOGIN Y ROLES ---
 let usuarioActual = JSON.parse(sessionStorage.getItem('vicios_usuarioActivo'));
 
-if (!usuarioActual) {
-    window.location.href = 'index.html'; // Patea al login si no está autenticado
-}
+if (!usuarioActual) window.location.href = 'index.html'; 
 
 function cerrarSesion() {
     if(confirm("¿Seguro que deseas cerrar sesión?")) {
@@ -17,19 +15,25 @@ let estadoCaja = JSON.parse(localStorage.getItem('vicios_estadoCaja')) || { abie
 let ventasHoy = JSON.parse(localStorage.getItem('vicios_ventasHoy')) || [];
 let gastosHoy = JSON.parse(localStorage.getItem('vicios_gastosHoy')) || [];
 let historialDias = JSON.parse(localStorage.getItem('vicios_historialDias')) || [];
+let clientesDB = JSON.parse(localStorage.getItem('vicios_clientesDB')) || []; 
+
 let pedidoActual = []; 
 let totalActual = 0;
-
-let cfgActual = null;
-let nombreItemBase = "";
-let precioBase = 0;
-let diaVisualizando = null; // Para reenviar reportes pasados
+let cfgActual = null; let nombreItemBase = ""; let precioBase = 0; let diaVisualizando = null;
 
 function actualizarTituloFicha() {
     let nroFicha = estadoCaja.siguienteFicha || 1;
     let titulo = document.getElementById('titulo-ticket');
-    if (titulo) {
-        titulo.innerHTML = `🛒 Ticket Actual <span style="color:#ff4500;">(Ficha #${nroFicha})</span>`;
+    if (titulo) titulo.innerHTML = `🛒 Ticket Actual <span style="color:#ff4500;">(Ficha #${nroFicha})</span>`;
+}
+
+function cargarClientes() {
+    let dl = document.getElementById('lista-clientes');
+    if (dl) {
+        dl.innerHTML = '';
+        clientesDB.forEach(c => {
+            let opt = document.createElement('option'); opt.value = c; dl.appendChild(opt);
+        });
     }
 }
 
@@ -49,7 +53,7 @@ document.getElementById('modales-container').innerHTML = `
             <h2 id="modal-dinamico-titulo">Detalles</h2>
             <div id="modal-dinamico-contenido"></div>
             
-            <p style="margin-top: 15px; font-weight: bold; color: #333;">Tipo de consumo (Plato):</p>
+            <p style="margin-top: 15px; font-weight: bold; color: #333;">Tipo de consumo inicial:</p>
             <select id="modal-dinamico-tipo-consumo" class="form-select" style="margin-bottom: 10px;">
                 <option value="Mesa">🍽️ Para Servirse (Mesa)</option>
                 <option value="Llevar">🛍️ Para Llevar</option>
@@ -129,85 +133,40 @@ document.getElementById('modales-container').innerHTML = `
 `;
 
 window.onload = function() {
-    // Aplicar restricciones de ROL
     if (usuarioActual.rol === "cajero") {
         document.querySelector('.btn-gastos').style.display = 'none';
         document.querySelector('button[onclick="abrirHistorialDias()"]').style.display = 'none';
         document.querySelector('.caja-chica-display').onclick = null;
         document.querySelector('.caja-chica-display').style.cursor = 'default';
-        document.querySelector('.caja-chica-display').title = 'Modificación solo para Administradores';
-        
     }
+    
+    cargarClientes(); 
 
-    // --- RECUPERACIÓN DEL DÍA 24/02/2026 ---
+    // --- RECUPERACIÓN HISTORIAL ---
     let existe24 = historialDias.find(d => d.fecha === "24/02/2026");
     if (!existe24) {
         historialDias.push({
-            fecha: "24/02/2026",
-            cajaChica: 0,
-            efectivo: 194,
-            qr: 162,
-            total: 356,
+            fecha: "24/02/2026", cajaChica: 0, efectivo: 194, qr: 162, total: 356,
             resumenPlatos: "3x Económico ⅛ (Pecho), 10x Silpancho de Res, 2x Jarra 2 ½ Litros (Limón), 2x Jarra 1 ½ Litros (Maracuyá), 1x Alitas 8 Pz, 5x Económico ⅛ (Pierna)",
             gastosArr: [],
             ventasArr: [
-                { id: 201, hora: "09:59 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 34, montoQR: 0, total: 34, anulada: false, items: [{cantidad: 2, nombre: "Económico ⅛ (Pecho)", precio: 17}] },
-                { id: 202, hora: "09:42 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 15, montoQR: 0, total: 15, anulada: false, items: [{cantidad: 1, nombre: "Económico ⅛ (Pierna)", precio: 15}] },
-                { id: 203, hora: "09:30 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 30, montoQR: 0, total: 30, anulada: false, items: [{cantidad: 1, nombre: "Económico ⅛ (Pierna)", precio: 15}, {cantidad: 1, nombre: "Silpancho de Res", precio: 15}] },
-                { id: 204, hora: "08:55 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 15, montoQR: 0, total: 15, anulada: false, items: [{cantidad: 1, nombre: "Silpancho de Res", precio: 15}] },
-                { id: 205, hora: "08:52 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 30, montoQR: 0, total: 30, anulada: false, items: [{cantidad: 2, nombre: "Económico ⅛ (Pierna)", precio: 15}] },
-                { id: 206, hora: "08:50 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 70, montoQR: 0, total: 70, anulada: false, items: [{cantidad: 1, nombre: "Alitas 8 Pz", precio: 30}, {cantidad: 1, nombre: "Económico ⅛ (Pierna)", precio: 15}, {cantidad: 1, nombre: "Silpancho de Res", precio: 15}, {cantidad: 1, nombre: "Jarra 1 ½ Litros (Maracuyá)", precio: 10}] },
-                { id: 207, hora: "08:34 p. m.", tipoLugar: "Mesa", metodo: "QR", montoEfectivo: 0, montoQR: 55, total: 55, anulada: false, items: [{cantidad: 3, nombre: "Silpancho de Res", precio: 15}, {cantidad: 1, nombre: "Jarra 1 ½ Litros (Maracuyá)", precio: 10}] },
-                { id: 208, hora: "08:20 p. m.", tipoLugar: "Mesa", metodo: "QR", montoEfectivo: 0, montoQR: 107, total: 107, anulada: false, items: [{cantidad: 1, nombre: "Económico ⅛ (Pecho)", precio: 17}, {cantidad: 4, nombre: "Silpancho de Res", precio: 15}, {cantidad: 2, nombre: "Jarra 2 ½ Litros (Limón)", precio: 15}] }
+                { id: 201, hora: "09:59 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 34, montoQR: 0, total: 34, anulada: false, vuelto: 0, montoRecibido: 34, vueltoPendiente: 0, items: [{cantidad: 2, nombre: "Económico ⅛ (Pecho)", precio: 17}] },
+                { id: 202, hora: "09:42 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 15, montoQR: 0, total: 15, anulada: false, vuelto: 0, montoRecibido: 15, vueltoPendiente: 0, items: [{cantidad: 1, nombre: "Económico ⅛ (Pierna)", precio: 15}] }
             ]
         });
         localStorage.setItem('vicios_historialDias', JSON.stringify(historialDias));
     }
 
-    // --- RECUPERACIÓN DEL DÍA 25/02/2026 ---
-    let existe25 = historialDias.find(d => d.fecha === "25/02/2026");
-    if (!existe25) {
-        historialDias.push({
-            fecha: "25/02/2026", 
-            cajaChica: 51, 
-            efectivo: 611, 
-            qr: 35, 
-            total: 646,
-            resumenPlatos: "7x Alitas 4 Pz, 2x Alitas 6 Pz, 1x Alitas 8 Pz, 12x Silpancho de Res, 1x Silpancho con 2 Huevos, 4x Milanesa, 2x Económico ⅛ (Pierna), 1x Económico ⅛ (Pecho), 1x Económico ⅛ (Entre Pierna), 1x Económico ⅛ (Ala), 1x Cuarto de Pollo (Pecho y Ala), 6x Jarra 1 ½ Litros (Maracuyá), 3x Vaso (Maracuyá), 3x Vaso (Limón)",
-            gastosArr: [ { id: 1, detalle: "Gastos registrados del día", monto: 25 } ], 
-            ventasArr: [
-                { id: 101, hora: "11:01 p. m.", tipoLugar: "Llevar", metodo: "Efectivo", montoEfectivo: 45, montoQR: 0, total: 45, anulada: false, items: [{cantidad: 2, nombre: "Silpancho de Res", precio: 15}, {cantidad: 1, nombre: "Milanesa", precio: 15}] },
-                { id: 102, hora: "10:52 p. m.", tipoLugar: "Mesa", metodo: "Mixto (Ef: 28 / QR: 25)", montoEfectivo: 28, montoQR: 25, total: 53, anulada: false, items: [{cantidad: 2, nombre: "Alitas 6 Pz", precio: 25}, {cantidad: 1, nombre: "Vaso (Maracuyá)", precio: 3}] },
-                { id: 103, hora: "10:42 p. m.", tipoLugar: "Llevar", metodo: "Efectivo", montoEfectivo: 15, montoQR: 0, total: 15, anulada: false, items: [{cantidad: 1, nombre: "Silpancho de Res", precio: 15}] },
-                { id: 104, hora: "10:41 p. m.", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 40, montoQR: 0, total: 40, anulada: false, items: [{cantidad: 1, nombre: "Milanesa", precio: 15}, {cantidad: 1, nombre: "Económico ⅛ (Pierna)", precio: 15}, {cantidad: 1, nombre: "Jarra 1 ½ Litros (Maracuyá)", precio: 10}] },
-                { id: 105, hora: "10:06 p. m.", tipoLugar: "Mesa", metodo: "QR", montoEfectivo: 0, montoQR: 10, total: 10, anulada: false, items: [{cantidad: 1, nombre: "Jarra 1 ½ Litros (Maracuyá)", precio: 10}] },
-                { id: 106, hora: "Resumen", tipoLugar: "Mesa", metodo: "Efectivo", montoEfectivo: 483, montoQR: 0, total: 483, anulada: false, items: [{cantidad: 7, nombre: "Alitas 4 Pz", precio: 18}, {cantidad: 1, nombre: "Alitas 8 Pz", precio: 30}, {cantidad: 9, nombre: "Silpancho de Res", precio: 15}, {cantidad: 1, nombre: "Silpancho con 2 Huevos", precio: 17}, {cantidad: 2, nombre: "Milanesa", precio: 15}, {cantidad: 1, nombre: "Económico ⅛ (Pierna)", precio: 15}, {cantidad: 1, nombre: "Económico ⅛ (Pecho)", precio: 17}, {cantidad: 1, nombre: "Económico ⅛ (Entre Pierna)", precio: 15}, {cantidad: 1, nombre: "Económico ⅛ (Ala)", precio: 17}, {cantidad: 1, nombre: "Cuarto de Pollo (Pecho y Ala)", precio: 26}, {cantidad: 4, nombre: "Jarra 1 ½ Litros (Maracuyá)", precio: 10}, {cantidad: 2, nombre: "Vaso (Maracuyá)", precio: 3}, {cantidad: 3, nombre: "Vaso (Limón)", precio: 3}] }
-            ]
-        });
-        localStorage.setItem('vicios_historialDias', JSON.stringify(historialDias));
-        actualizarTituloFicha();
-    }
-
-    // --- ORDENAR EL HISTORIAL POR FECHA ---
     historialDias.sort((a, b) => {
-        let partsA = a.fecha.split('/');
-        let partsB = b.fecha.split('/');
-        let dateA = new Date(partsA[2], partsA[1] - 1, partsA[0]);
-        let dateB = new Date(partsB[2], partsB[1] - 1, partsB[0]);
-        return dateA - dateB;
+        let partsA = a.fecha.split('/'); let partsB = b.fecha.split('/');
+        return new Date(partsA[2], partsA[1]-1, partsA[0]) - new Date(partsB[2], partsB[1]-1, partsB[0]);
     });
 
-    if (!estadoCaja.abierta) {
-        document.getElementById('modal-apertura').style.display = 'flex';
-    } else {
-        actualizarHeaderCaja();
-    }
+    if (!estadoCaja.abierta) document.getElementById('modal-apertura').style.display = 'flex';
+    else { actualizarHeaderCaja(); actualizarTituloFicha(); }
 };
 
-function actualizarHeaderCaja() {
-    document.getElementById('lbl-caja-chica-header').innerText = `Caja Chica: ${estadoCaja.cajaChica} Bs`;
-}
-
+function actualizarHeaderCaja() { document.getElementById('lbl-caja-chica-header').innerText = `Caja Chica: ${estadoCaja.cajaChica} Bs`; }
 function abrirCaja() {
     let monto = parseFloat(document.getElementById('input-caja-chica').value) || 0;
     estadoCaja = { abierta: true, cajaChica: monto, siguienteFicha: 1 };
@@ -215,24 +174,19 @@ function abrirCaja() {
     localStorage.setItem('vicios_estadoCaja', JSON.stringify(estadoCaja));
     localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy));
     localStorage.setItem('vicios_gastosHoy', JSON.stringify(gastosHoy));
-    actualizarHeaderCaja();
-    actualizarTituloFicha();
-    cerrarModales();
+    actualizarHeaderCaja(); actualizarTituloFicha(); cerrarModales();
 }
 
 function modificarCajaChica() {
-    let pass = prompt("Para modificar la Caja Chica, ingresa la contraseña maestra:");
+    let pass = prompt("Contraseña maestra para modificar Caja Chica:");
     if (pass === "Terceros_V&S") {
-        let nuevoMonto = prompt("Ingresa el nuevo monto exacto de la Caja Chica en Bs:", estadoCaja.cajaChica);
+        let nuevoMonto = prompt("Monto exacto en Bs:", estadoCaja.cajaChica);
         if (nuevoMonto !== null && !isNaN(nuevoMonto)) {
             estadoCaja.cajaChica = parseFloat(nuevoMonto);
             localStorage.setItem('vicios_estadoCaja', JSON.stringify(estadoCaja));
-            actualizarHeaderCaja();
-            alert("Caja Chica actualizada con éxito.");
+            actualizarHeaderCaja(); alert("Caja Chica actualizada.");
         }
-    } else if (pass !== null) {
-        alert("❌ Contraseña incorrecta.");
-    }
+    } else if (pass !== null) alert("❌ Contraseña incorrecta.");
 }
 
 // Gastos
@@ -240,7 +194,7 @@ function abrirGastos() { renderizarGastos(); document.getElementById('modal-gast
 function agregarGasto() {
     let detalle = document.getElementById('input-gasto-detalle').value.trim();
     let monto = parseFloat(document.getElementById('input-gasto-monto').value);
-    if(!detalle || isNaN(monto) || monto <= 0) { alert("Por favor ingresa un detalle y monto válido."); return; }
+    if(!detalle || isNaN(monto) || monto <= 0) return;
     gastosHoy.push({ id: Date.now(), detalle, monto });
     localStorage.setItem('vicios_gastosHoy', JSON.stringify(gastosHoy));
     document.getElementById('input-gasto-detalle').value = ""; document.getElementById('input-gasto-monto').value = "";
@@ -251,7 +205,7 @@ function renderizarGastos() {
     const lista = document.getElementById('lista-gastos'); let total = 0; lista.innerHTML = '';
     gastosHoy.forEach(g => {
         total += g.monto;
-        lista.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px dashed #ccc;"><span style="color:#000;">${g.detalle}</span><div style="display:flex; gap:10px;"><strong style="color:#dc3545;">${g.monto} Bs</strong><button style="background:none; border:none; color:red; cursor:pointer;" onclick="eliminarGasto(${g.id})">❌</button></div></div>`;
+        lista.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px dashed #ccc;"><span style="color:#000;">${g.detalle}</span><div style="display:flex; gap:10px;"><strong style="color:#dc3545;">${g.monto} Bs</strong><button style="color:red; background:none; border:none; cursor:pointer;" onclick="eliminarGasto(${g.id})">❌</button></div></div>`;
     });
     document.getElementById('total-gastos-display').innerText = total;
 }
@@ -261,28 +215,22 @@ function abrirModalDinamico(nombre, precioBaseParam, config) {
     cfgActual = config; nombreItemBase = nombre; precioBase = precioBaseParam;
     document.getElementById('modal-dinamico-titulo').innerText = nombre;
     document.getElementById('modal-dinamico-nota').value = "";
-    document.getElementById('modal-dinamico-tipo-consumo').value = "Mesa"; // Valor predeterminado
+    document.getElementById('modal-dinamico-tipo-consumo').value = "Mesa"; 
     let contenidoHTML = "";
 
     if (config.tipo === 'alitas') {
         if (config.piezas === 4) {
-            contenidoHTML += `<p style="font-weight:bold; margin-bottom:5px; color:#333;">Elige 1 Salsa obligatoria:</p><select class="form-select" id="alita-salsa-1"><option value="BBQ">Salsa BBQ</option><option value="Miel Mostaza">Salsa Miel Mostaza</option><option value="Picante">Salsa Picante</option></select>`;
+            contenidoHTML += `<p style="font-weight:bold; margin-bottom:5px; color:#333;">Salsa:</p><select class="form-select" id="alita-salsa-1"><option value="BBQ">Salsa BBQ</option><option value="Miel Mostaza">Salsa Miel Mostaza</option><option value="Picante">Salsa Picante</option></select>`;
         } else {
             let mitad = config.piezas / 2;
-            contenidoHTML += `<p style="font-weight:bold; margin-bottom:10px; color:#ff0000; font-size:1.1rem;">⚠️ Debes distribuir exactamente ${config.piezas} alitas:</p>
-                <div class="fila-alitas"><input type="number" id="alita-qty-1" class="input-grande" value="${mitad}" min="0" max="${config.piezas}"><span style="color:#000; font-weight:bold;">Alitas de:</span><select class="form-select" id="alita-salsa-1"><option value="BBQ">BBQ</option><option value="Miel Mostaza" selected>Miel Mostaza</option><option value="Picante">Picante</option></select></div>
-                <div class="fila-alitas"><input type="number" id="alita-qty-2" class="input-grande" value="${mitad}" min="0" max="${config.piezas}"><span style="color:#000; font-weight:bold;">Alitas de:</span><select class="form-select" id="alita-salsa-2"><option value="Picante">Picante</option><option value="BBQ" selected>BBQ</option><option value="Miel Mostaza">Miel Mostaza</option></select></div>`;
+            contenidoHTML += `<p style="font-weight:bold; margin-bottom:10px; color:#ff0000;">⚠️ Distribuir exactamente ${config.piezas} alitas:</p>
+                <div class="fila-alitas"><input type="number" id="alita-qty-1" class="input-grande" value="${mitad}" min="0" max="${config.piezas}"><span style="color:#000; font-weight:bold;">Alitas:</span><select class="form-select" id="alita-salsa-1"><option>BBQ</option><option selected>Miel Mostaza</option><option>Picante</option></select></div>
+                <div class="fila-alitas"><input type="number" id="alita-qty-2" class="input-grande" value="${mitad}" min="0" max="${config.piezas}"><span style="color:#000; font-weight:bold;">Alitas:</span><select class="form-select" id="alita-salsa-2"><option>Picante</option><option selected>BBQ</option><option>Miel Mostaza</option></select></div>`;
         }
     } 
-    else if (config.tipo === 'presa') {
-        contenidoHTML += `<p style="font-weight:bold; margin-bottom:5px; color:#333;">Elige la presa exacta:</p><select class="form-select" id="cmb-presa">${config.opciones.map(op => `<option value="${op}">${op}</option>`).join('')}</select>`;
-    }
-    else if (config.tipo === 'refresco') {
-        contenidoHTML += `<p style="font-weight:bold; margin-bottom:5px; color:#333;">Elige el sabor:</p><select class="form-select" id="cmb-refresco"><option value="Maracuyá">Maracuyá</option><option value="Limón">Limón</option><option value="Canela">Canela</option></select>`;
-    }
-    else if (config.tipo === 'gaseosa') {
-        contenidoHTML += `<p style="font-weight:bold; margin-bottom:5px; color:#333;">Elige el sabor:</p><select class="form-select" id="cmb-gaseosa"><option value="Coca Cola">Coca Cola</option><option value="Fanta">Fanta</option><option value="Sprite">Sprite</option></select>`;
-    }
+    else if (config.tipo === 'presa') contenidoHTML += `<select class="form-select" id="cmb-presa">${config.opciones.map(op => `<option value="${op}">${op}</option>`).join('')}</select>`;
+    else if (config.tipo === 'refresco') contenidoHTML += `<select class="form-select" id="cmb-refresco"><option>Maracuyá</option><option>Limón</option><option>Canela</option></select>`;
+    else if (config.tipo === 'gaseosa') contenidoHTML += `<select class="form-select" id="cmb-gaseosa"><option>Coca Cola</option><option>Fanta</option><option>Sprite</option></select>`;
     
     document.getElementById('modal-dinamico-contenido').innerHTML = contenidoHTML;
     document.getElementById('modal-dinamico').style.display = 'flex';
@@ -293,21 +241,17 @@ function confirmarItemDinamico() {
     let tipoConsumo = document.getElementById('modal-dinamico-tipo-consumo').value;
 
     if (cfgActual.tipo === 'alitas') {
-        if (cfgActual.piezas === 4) {
-            let s1 = document.getElementById('alita-salsa-1').value; detalle = `1 Salsa: ${s1}`;
-        } else {
+        if (cfgActual.piezas === 4) detalle = `Salsa: ${document.getElementById('alita-salsa-1').value}`;
+        else {
             let q1 = parseInt(document.getElementById('alita-qty-1').value) || 0; let s1 = document.getElementById('alita-salsa-1').value;
             let q2 = parseInt(document.getElementById('alita-qty-2').value) || 0; let s2 = document.getElementById('alita-salsa-2').value;
-
-            if (q1 + q2 !== cfgActual.piezas) { alert(`❌ ERROR EN LAS CANTIDADES:\n\nEl plato debe sumar exactamente ${cfgActual.piezas} alitas.`); return; }
-            if (s1 === s2) { detalle = `Salsa: ${s1} (Todas)`; } else {
-                let partes = []; if(q1 > 0) partes.push(`${q1} de ${s1}`); if(q2 > 0) partes.push(`${q2} de ${s2}`); detalle = partes.join(' y ');
-            }
+            if (q1 + q2 !== cfgActual.piezas) { alert(`❌ ERROR: Debes sumar ${cfgActual.piezas} alitas.`); return; }
+            if (s1 === s2) detalle = `Salsa: ${s1}`; else { let p = []; if(q1>0) p.push(`${q1} de ${s1}`); if(q2>0) p.push(`${q2} de ${s2}`); detalle = p.join(' y '); }
         }
     } 
-    else if (cfgActual.tipo === 'presa') { nombreFinal = `${nombreItemBase.split(' (')[0]} (${document.getElementById('cmb-presa').value})`; } 
-    else if (cfgActual.tipo === 'refresco') { nombreFinal += ` (${document.getElementById('cmb-refresco').value})`; }
-    else if (cfgActual.tipo === 'gaseosa') { nombreFinal += ` (${document.getElementById('cmb-gaseosa').value})`; }
+    else if (cfgActual.tipo === 'presa') nombreFinal = `${nombreItemBase.split(' (')[0]} (${document.getElementById('cmb-presa').value})`;
+    else if (cfgActual.tipo === 'refresco') nombreFinal += ` (${document.getElementById('cmb-refresco').value})`;
+    else if (cfgActual.tipo === 'gaseosa') nombreFinal += ` (${document.getElementById('cmb-gaseosa').value})`;
 
     let notaInput = document.getElementById('modal-dinamico-nota').value.trim();
     if (notaInput) detalle += (detalle ? " | " : "") + notaInput;
@@ -317,15 +261,21 @@ function confirmarItemDinamico() {
 }
 
 function cerrarModales() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
-function abrirQRFlotante() { if(totalActual>0){document.getElementById('qr-total-flotante').innerText=totalActual+' Bs.';document.getElementById('modal-qr-flotante').style.display='flex';}else{alert("Agrega productos al ticket primero.");}}
+function abrirQRFlotante() { if(totalActual>0){document.getElementById('qr-total-flotante').innerText=totalActual+' Bs.';document.getElementById('modal-qr-flotante').style.display='flex';}else{alert("Agrega productos al ticket.");}}
 function cerrarQRFlotante() { document.getElementById('modal-qr-flotante').style.display = 'none'; }
 
 // Carrito
-function agregarAlPedido(nombre, precio, nota, tipoConsumo = "Mesa") {
+function agregarAlPedido(nombre, precio, nota, tipoConsumo) {
     let index = pedidoActual.findIndex(i => i.nombre === nombre && i.nota === nota && i.tipoConsumo === tipoConsumo);
     if (index > -1) pedidoActual[index].cantidad++; else pedidoActual.push({ nombre, precio, nota, tipoConsumo, cantidad: 1, id: Date.now() + Math.random() });
     renderizarTicket();
 }
+
+window.cambiarTipoConsumoItem = function(id, nuevoTipo) {
+    let index = pedidoActual.findIndex(i => i.id === id);
+    if (index > -1) pedidoActual[index].tipoConsumo = nuevoTipo;
+}
+
 function quitarDelPedido(id) {
     let index = pedidoActual.findIndex(i => i.id === id);
     if (index > -1) { pedidoActual[index].cantidad--; if (pedidoActual[index].cantidad <= 0) pedidoActual.splice(index, 1); }
@@ -339,15 +289,22 @@ function renderizarTicket() {
     pedidoActual.forEach(item => {
         let subtotal = item.cantidad * item.precio; totalActual += subtotal;
         let htmlNota = item.nota ? `<span class="nota-item">📌 ${item.nota}</span>` : '';
-        let htmlTipo = item.tipoConsumo ? `<span style="color:#005580; font-size:0.85rem; font-weight:bold;">[${item.tipoConsumo}]</span> ` : '';
-        lista.innerHTML += `<div class="ticket-row"><div class="row-main"><div class="info"><span class="nombre">${htmlTipo}${item.nombre}</span><span>${item.cantidad}x ${item.precio} Bs = ${subtotal} Bs</span>${htmlNota}</div><div class="controles"><button class="btn-ctrl red" onclick="quitarDelPedido(${item.id})">-</button><span>${item.cantidad}</span><button class="btn-ctrl" onclick="agregarAlPedido('${item.nombre}', ${item.precio}, '${item.nota}', '${item.tipoConsumo}')">+</button></div></div></div>`;
+        
+        let selectorMesaLlevar = `
+            <select class="select-inline" onchange="cambiarTipoConsumoItem(${item.id}, this.value)">
+                <option value="Mesa" ${item.tipoConsumo==='Mesa'?'selected':''}>🍽️ Mesa</option>
+                <option value="Llevar" ${item.tipoConsumo==='Llevar'?'selected':''}>🛍️ Llevar</option>
+            </select>
+        `;
+
+        lista.innerHTML += `<div class="ticket-row"><div class="row-main"><div class="info"><span class="nombre">${selectorMesaLlevar}${item.nombre}</span><span>${item.cantidad}x ${item.precio} Bs = ${subtotal} Bs</span>${htmlNota}</div><div class="controles"><button class="btn-ctrl red" onclick="quitarDelPedido(${item.id})">-</button><span>${item.cantidad}</span><button class="btn-ctrl" onclick="agregarAlPedido('${item.nombre}', ${item.precio}, '${item.nota}', '${item.tipoConsumo}')">+</button></div></div></div>`;
     });
     document.getElementById('monto-total').innerText = totalActual + ' Bs.';
     document.getElementById('btn-cobrar').disabled = totalActual === 0;
     calcularVuelto();
 }
 
-// LOGICA DE PAGO Y PAGO MIXTO
+// LOGICA DE PAGO Y VUELTOS
 function togglePago() {
     let esEfectivo = document.getElementById('pago-efectivo').checked;
     let esQR = document.getElementById('pago-qr').checked;
@@ -362,28 +319,64 @@ function togglePago() {
 function calcularVuelto() {
     let esEfectivo = document.getElementById('pago-efectivo').checked;
     let esMixto = document.getElementById('pago-mixto').checked;
+    let cajaGestion = document.getElementById('caja-gestion-vuelto');
+
+    let totalVuelto = 0;
 
     if (esEfectivo) {
         let recibido = parseFloat(document.getElementById('monto-recibido').value) || 0;
         let txt = document.getElementById('monto-vuelto');
-        if ((recibido - totalActual) >= 0 && totalActual > 0) { txt.innerText = (recibido - totalActual) + ' Bs.'; txt.style.color = '#008000'; } 
-        else { txt.innerText = 'Falta dinero'; txt.style.color = '#ff0000'; }
+        totalVuelto = recibido - totalActual;
+        
+        if (totalVuelto >= 0 && totalActual > 0) { 
+            txt.innerText = totalVuelto + ' Bs.'; txt.style.color = '#008000'; 
+        } else { 
+            txt.innerText = 'Falta dinero'; txt.style.color = '#ff0000'; 
+        }
     } else if (esMixto) {
         let ef = parseFloat(document.getElementById('monto-mixto-efectivo').value) || 0;
         let qr = parseFloat(document.getElementById('monto-mixto-qr').value) || 0;
         let suma = ef + qr;
         let txt = document.getElementById('monto-mixto-estado');
-        if (suma >= totalActual && totalActual > 0) {
-            txt.innerText = 'Vuelto (Ef): ' + (suma - totalActual) + ' Bs.'; txt.style.color = '#008000';
+        totalVuelto = suma - totalActual;
+
+        if (totalVuelto >= 0 && totalActual > 0) {
+            txt.innerText = totalVuelto + ' Bs.'; txt.style.color = '#008000';
         } else {
-            txt.innerText = 'Falta: ' + (totalActual - suma) + ' Bs.'; txt.style.color = '#ff0000';
+            txt.innerText = 'Falta: ' + Math.abs(totalVuelto) + ' Bs.'; txt.style.color = '#ff0000';
         }
+    }
+
+    if (totalVuelto > 0 && totalActual > 0) {
+        cajaGestion.style.display = 'block';
+        document.getElementById('vuelto-entregado').value = totalVuelto; 
+        calcularDeudaVuelto();
+    } else {
+        cajaGestion.style.display = 'none';
     }
 }
 
-function procesarPago() {
+window.calcularDeudaVuelto = function() {
+    let esEfectivo = document.getElementById('pago-efectivo').checked;
+    let totalVuelto = 0;
+    if (esEfectivo) {
+        let recibido = parseFloat(document.getElementById('monto-recibido').value) || 0;
+        totalVuelto = recibido - totalActual;
+    } else {
+        let ef = parseFloat(document.getElementById('monto-mixto-efectivo').value) || 0;
+        let qr = parseFloat(document.getElementById('monto-mixto-qr').value) || 0;
+        totalVuelto = (ef + qr) - totalActual;
+    }
     
-    let tipoLugar = document.getElementById('tipo-pedido').value;
+    let entregado = parseFloat(document.getElementById('vuelto-entregado').value) || 0;
+    let deuda = totalVuelto - entregado;
+    
+    if (deuda < 0) deuda = 0; 
+    
+    document.getElementById('vuelto-deuda').innerText = deuda + ' Bs.';
+}
+
+function procesarPago() {
     let esEfectivo = document.getElementById('pago-efectivo').checked;
     let esQR = document.getElementById('pago-qr').checked;
     let esMixto = document.getElementById('pago-mixto').checked;
@@ -391,10 +384,36 @@ function procesarPago() {
     let pagoEf = 0; let pagoQR = 0; let metodoTxt = "";
     let nroFicha = estadoCaja.siguienteFicha || 1;
 
+    let countMesa = pedidoActual.filter(i => i.tipoConsumo === 'Mesa').length;
+    let countLlevar = pedidoActual.filter(i => i.tipoConsumo === 'Llevar').length;
+    let tipoLugarAuto = "Varios";
+    if (countMesa > 0 && countLlevar === 0) tipoLugarAuto = "Mesa";
+    else if (countLlevar > 0 && countMesa === 0) tipoLugarAuto = "Llevar";
+    else if (countMesa > 0 && countLlevar > 0) tipoLugarAuto = "Mixto";
+
+    let mesaInput = document.getElementById('input-mesa').value.trim();
+
+    let clienteInput = document.getElementById('input-cliente').value.trim();
+    if (!clienteInput) clienteInput = "Cliente General";
+    else if (!clientesDB.includes(clienteInput)) {
+        clientesDB.push(clienteInput);
+        localStorage.setItem('vicios_clientesDB', JSON.stringify(clientesDB));
+        cargarClientes();
+    }
+
+    let montoRecibidoFisico = 0;
+    let vueltoTotal = 0;
+    let deudaVueltoFisico = 0;
+
     if (esEfectivo) {
         let recibido = parseFloat(document.getElementById('monto-recibido').value) || 0;
         if (recibido < totalActual) { alert("⚠️ Monto insuficiente en efectivo."); return; }
         pagoEf = totalActual; metodoTxt = "Efectivo";
+        montoRecibidoFisico = recibido;
+        vueltoTotal = recibido - totalActual;
+        
+        let entregado = parseFloat(document.getElementById('vuelto-entregado').value) || 0;
+        deudaVueltoFisico = vueltoTotal - entregado;
     } else if (esQR) {
         pagoQR = totalActual; metodoTxt = "QR";
     } else if (esMixto) {
@@ -402,21 +421,28 @@ function procesarPago() {
         let qr = parseFloat(document.getElementById('monto-mixto-qr').value) || 0;
         if ((ef + qr) < totalActual) { alert("⚠️ La suma de Efectivo y QR no alcanza para el total."); return; }
         
-        let vuelto = (ef + qr) - totalActual;
-        pagoQR = qr; // El QR entra íntegro al banco
-        pagoEf = ef - vuelto; // El vuelto se da en efectivo real
-        if (pagoEf < 0) pagoEf = 0; 
+        vueltoTotal = (ef + qr) - totalActual;
+        pagoQR = qr; 
+        pagoEf = ef - vueltoTotal; if (pagoEf < 0) pagoEf = 0; 
         metodoTxt = `Mixto (Ef: ${pagoEf} / QR: ${pagoQR})`;
+        montoRecibidoFisico = ef; 
+        
+        let entregado = parseFloat(document.getElementById('vuelto-entregado').value) || 0;
+        deudaVueltoFisico = vueltoTotal - entregado;
     }
 
-    if (!confirm(`✅ ¿Registrar venta por ${totalActual} Bs?\n\n🎫 FICHA: #${nroFicha}\nPedido General: ${tipoLugar}`)) return;
+    if (deudaVueltoFisico < 0) deudaVueltoFisico = 0;
+
+    if (!confirm(`✅ ¿Registrar venta por ${totalActual} Bs?\n🎫 FICHA: #${nroFicha}\n👤 ${clienteInput}`)) return;
 
     ventasHoy.push({ 
         id: Date.now(), ficha: nroFicha, hora: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
-        tipoLugar: tipoLugar, metodo: metodoTxt, 
+        tipoLugar: tipoLugarAuto, cliente: clienteInput, mesa: mesaInput, metodo: metodoTxt, 
         montoEfectivo: pagoEf, montoQR: pagoQR, total: totalActual, anulada: false, 
+        montoRecibido: montoRecibidoFisico, vuelto: vueltoTotal, vueltoPendiente: deudaVueltoFisico,
         items: JSON.parse(JSON.stringify(pedidoActual)) 
     });
+    
     estadoCaja.siguienteFicha = nroFicha + 1;
     actualizarTituloFicha();
     localStorage.setItem('vicios_estadoCaja', JSON.stringify(estadoCaja));
@@ -424,6 +450,8 @@ function procesarPago() {
 
     pedidoActual = []; document.getElementById('monto-recibido').value = ''; 
     document.getElementById('monto-mixto-qr').value = ''; document.getElementById('monto-mixto-efectivo').value = '';
+    document.getElementById('input-cliente').value = ''; document.getElementById('input-mesa').value = '';
+    document.getElementById('vuelto-entregado').value = ''; document.getElementById('caja-gestion-vuelto').style.display = 'none';
     renderizarTicket();
     
     const btn = document.getElementById('btn-cobrar'); btn.innerText = "¡COBRADO EXITO! ✅"; btn.style.background = "#25d366";
@@ -436,7 +464,7 @@ function generarReporteData(ventasData) {
     ventasData.forEach(v => {
         if (!v.anulada) {
             if (v.montoEfectivo !== undefined) { ef += v.montoEfectivo; qr += v.montoQR; } 
-            else { if (v.metodo === 'Efectivo') ef += v.total; else qr += v.total; } // Soporte a ventas viejas
+            else { if (v.metodo === 'Efectivo') ef += v.total; else qr += v.total; } 
             v.items.forEach(i => { conteo[i.nombre] = (conteo[i.nombre] || 0) + i.cantidad; });
         }
     });
@@ -474,16 +502,34 @@ function abrirCierreCaja(esHistorico = false, historicoData = null, modoSoloVist
 
     const tbody = document.querySelector('#tabla-ventas-hoy tbody'); tbody.innerHTML = '';
     vRender.forEach(v => {
-        
         let textoFicha = v.ficha ? ` - Ficha #${v.ficha}` : '';
+        let txtCliente = v.cliente ? `<strong style="color:#005580; font-size:1.1rem;">👤 ${v.cliente}</strong><br>` : '';
         let etiquetaMesa = v.tipoLugar ? `<strong>[${v.tipoLugar.toUpperCase()}${textoFicha}]</strong><br>` : '';
-        let txtItems = etiquetaMesa + v.items.map(i => {
-            let tipoC = i.tipoConsumo ? ` <span style="color:#005580; font-size:0.85rem;">[${i.tipoConsumo}]</span>` : '';
-            return `${i.cantidad}x ${i.nombre}${tipoC}${i.nota ? `<br><small style="color:#d35400;">(${i.nota})</small>`:''}`
-        }).join('<br>');
         
-        let btnAccion = (!esHistorico && !v.anulada) ? `<button class="btn-ctrl red" onclick="anularVenta(${v.id})" title="Anular">🗑️</button>` : (v.anulada ? 'Anulada' : 'Cerrada');
-        tbody.innerHTML = `<tr class="${v.anulada ? 'tr-anulada':''}"><td style="color:#000;">${v.hora}</td><td style="color:#000;">${txtItems}</td><td style="color:#000;">${v.metodo}</td><td style="color:#000; font-weight:bold;">${v.total} Bs</td><td class="col-accion">${btnAccion}</td></tr>` + tbody.innerHTML; 
+        let txtVuelto = "";
+        let btnSaldar = "";
+
+        if (v.vuelto > 0) {
+            if (v.vueltoPendiente > 0) {
+                let mesaAlerta = v.mesa ? ` (Ir a Mesa ${v.mesa})` : '';
+                txtVuelto = `<div class="alerta-deuda">⚠️ FALTA VUELTO: Entregar ${v.vueltoPendiente} Bs ${mesaAlerta}<br><small style="color:#555;">(Vuelto total era ${v.vuelto} Bs | Ya le diste ${v.vuelto - v.vueltoPendiente} Bs | Pagó con ${v.montoRecibido} Bs)</small></div>`;
+                
+                if (!esHistorico && !v.anulada) {
+                    btnSaldar = `<button class="btn-saldar" onclick="saldarVuelto(${v.id})">✔️ Ya le di el vuelto</button>`;
+                }
+            } else {
+                txtVuelto = `<br><span style="color:#25d366; font-size:0.85rem; font-weight:bold;">✅ Vuelto entregado completo: ${v.vuelto} Bs</span>`;
+                txtVuelto += ` <span style="font-size:0.8rem; color:#666;">(Pagó con: ${v.montoRecibido} Bs)</span>`;
+            }
+        }
+
+        let txtItems = txtCliente + etiquetaMesa + v.items.map(i => {
+            let tipoC = i.tipoConsumo ? ` <span style="color:#ff8c00; font-size:0.85rem; font-weight:bold;">[${i.tipoConsumo}]</span>` : '';
+            return `${i.cantidad}x ${i.nombre}${tipoC}${i.nota ? `<br><small style="color:#d35400;">(${i.nota})</small>`:''}`
+        }).join('<br>') + txtVuelto;
+        
+        let btnAccion = (!esHistorico && !v.anulada) ? `<button class="btn-ctrl red" onclick="anularVenta(${v.id})" title="Anular">🗑️ Anular</button>` : (v.anulada ? 'Anulada' : 'Cerrada');
+        tbody.innerHTML = `<tr class="${v.anulada ? 'tr-anulada':''}"><td style="color:#000;">${v.hora}</td><td style="color:#000;">${txtItems}</td><td style="color:#000;">${v.metodo}</td><td style="color:#000; font-weight:bold;">${v.total} Bs</td><td class="col-accion" style="min-width: 120px;">${btnAccion} ${btnSaldar}</td></tr>` + tbody.innerHTML; 
     });
 
     document.getElementById('resumen-caja-chica').innerText = cChica + ' Bs.';
@@ -498,6 +544,15 @@ function abrirCierreCaja(esHistorico = false, historicoData = null, modoSoloVist
     document.getElementById('modal-cierre').style.display = 'flex';
 }
 
+window.saldarVuelto = function(id) {
+    if(confirm("✔️ ¿Confirmas que acabas de ir a entregarle el dinero que faltaba a este cliente?")) {
+        let v = ventasHoy.find(x => x.id === id);
+        if(v) v.vueltoPendiente = 0; // Borra la deuda
+        localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy));
+        abrirCierreCaja(false, null, document.getElementById('titulo-modal-cierre').innerText.includes("Historial")); 
+    }
+}
+
 function anularVenta(id) {
     if(confirm("🗑️ ¿Anular esta venta?\n\nEl dinero se descontará de la caja.")) {
         let v = ventasHoy.find(x => x.id === id); if(v) v.anulada = true;
@@ -506,50 +561,39 @@ function anularVenta(id) {
     }
 }
 
-// ==========================================
-// CIERRE Y GENERACION DE PDF
-// ==========================================
 function enviarWhatsAppYGuardar() {
-    if(!confirm("🚨 ¡ATENCIÓN! 🚨\n\n¿CERRAR EL DÍA DE HOY?\n\nGenerará el PDF, enviará WhatsApp y pondrá la caja a 0.")) return;
+    if(!confirm("🚨 ¿CERRAR EL DÍA DE HOY?\n\nGenerará el PDF, enviará WhatsApp y pondrá la caja a 0.")) return;
 
     let dataRep = generarReporteData(ventasHoy);
     let totalGastos = 0; gastosHoy.forEach(g => { totalGastos += g.monto; });
     let fecha = new Date().toLocaleDateString();
     let resumenPlatosTexto = Object.entries(dataRep.conteoPlatos).map(([n, c]) => `${c}x ${n}`).join(', ');
 
+    let deudaVueltos = 0;
+    ventasHoy.forEach(v => { if(!v.anulada && v.vueltoPendiente > 0) deudaVueltos += v.vueltoPendiente; });
+
     historialDias.push({ fecha, cajaChica: estadoCaja.cajaChica, efectivo: dataRep.efectivo, qr: dataRep.qr, total: dataRep.efectivo+dataRep.qr, gastosArr: gastosHoy, ventasArr: JSON.parse(JSON.stringify(ventasHoy)), resumenPlatos: resumenPlatosTexto });
     localStorage.setItem('vicios_historialDias', JSON.stringify(historialDias));
 
-    alert("PASO 1: Dale a 'Guardar como PDF' en la ventana que aparecerá.\nPASO 2: Se abrirá WhatsApp, adjunta ahí el PDF guardado.");
+    alert("PASO 1: Dale a 'Guardar como PDF' en la ventana que aparecerá.\nPASO 2: Se abrirá WhatsApp, adjunta ahí el PDF.");
+    document.querySelector('.modal-botones').style.display = 'none'; document.getElementById('area-impresion').style.overflowY = 'visible';
     
-    document.querySelector('.modal-botones').style.display = 'none';
-    document.getElementById('area-impresion').style.overflowY = 'visible';
-    
-    // 🔥 TRUCO MAGICO: Forzar el nombre del PDF
-    let tituloOriginal = document.title;
-    let fechaFormateada = fecha.replace(/\//g, '_'); 
+    let tituloOriginal = document.title; let fechaFormateada = fecha.replace(/\//g, '_'); 
     document.title = `REPORTE_DIA_${fechaFormateada}_V_&_S`;
     
-    // Pausa de 0.1s para que Chrome alcance a leer el título antes de imprimir
     setTimeout(() => {
         window.print();
+        document.title = tituloOriginal; document.querySelector('.modal-botones').style.display = 'flex'; document.getElementById('area-impresion').style.overflowY = 'auto';
 
-        // Restaurar pantalla
-        document.title = tituloOriginal;
-        document.querySelector('.modal-botones').style.display = 'flex';
-        document.getElementById('area-impresion').style.overflowY = 'auto';
-
-        // Lanzar WhatsApp a los 3 segundos
         setTimeout(() => {
             let efCajon = (dataRep.efectivo + estadoCaja.cajaChica) - totalGastos;
-            let textoWA = `📊 *CIERRE DE CAJA - VICIOS & SABORES* 🔥\n📅 Fecha: ${fecha}\n\n💵 *Caja Chica Inicial:* ${estadoCaja.cajaChica} Bs\n💰 *Ingresos Efectivo:* ${dataRep.efectivo} Bs\n🔴 *Gastos:* -${totalGastos} Bs\n👉 *EFECTIVO EN CAJÓN:* ${efCajon} Bs\n\n📱 *Ingresos QR:* ${dataRep.qr} Bs\n📈 *TOTAL VENTAS:* ${dataRep.efectivo + dataRep.qr} Bs\n\n🍗 *Platos:* ${resumenPlatosTexto || "Sin ventas"}\n\n📎 *(Te adjunto el PDF del reporte a este mensaje).*`;
-
-            let url = `https://wa.me/59179962454?text=${encodeURIComponent(textoWA)}`;
+            let txtDeuda = deudaVueltos > 0 ? `\n⚠️ *Vueltos que nos olvidamos entregar:* ${deudaVueltos} Bs\n` : '';
+            
+            let textoWA = `📊 *CIERRE DE CAJA - VICIOS & SABORES* 🔥\n📅 Fecha: ${fecha}\n\n💵 *Caja Chica Inicial:* ${estadoCaja.cajaChica} Bs\n💰 *Ingresos Efectivo:* ${dataRep.efectivo} Bs\n🔴 *Gastos:* -${totalGastos} Bs\n👉 *EFECTIVO EN CAJÓN:* ${efCajon} Bs\n${txtDeuda}\n📱 *Ingresos QR:* ${dataRep.qr} Bs\n📈 *TOTAL VENTAS:* ${dataRep.efectivo + dataRep.qr} Bs\n\n🍗 *Platos:* ${resumenPlatosTexto || "Sin ventas"}\n\n📎 *(Te adjunto el PDF).*`;
             
             estadoCaja.abierta = false; estadoCaja.cajaChica = 0; estadoCaja.siguienteFicha = 1; ventasHoy = []; gastosHoy = [];
             localStorage.setItem('vicios_estadoCaja', JSON.stringify(estadoCaja)); localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy)); localStorage.setItem('vicios_gastosHoy', JSON.stringify(gastosHoy));
-            
-           window.location.href = url; 
+            window.location.href = `https://wa.me/59179962454?text=${encodeURIComponent(textoWA)}`; 
         }, 3000);
     }, 100); 
 }
@@ -560,50 +604,11 @@ function abrirHistorialDias() {
     else {
         historialDias.slice().reverse().forEach((dia, i) => {
             let id = historialDias.length - 1 - i;
-            lista.innerHTML += `<div class="dia-card" onclick="verDetalleDia(${id})"><div class="dia-card-header"><span>🗓️ ${dia.fecha}</span><span>${dia.total} Bs.</span></div><p style="color:#555; font-size:0.9rem;">Clic para ver detalle</p></div>`;
+            lista.innerHTML += `<div class="dia-card" onclick="verDetalleDia(${id})"><div class="dia-card-header"><span>🗓️ ${dia.fecha}</span><span>${dia.total} Bs.</span></div></div>`;
         });
     }
     document.getElementById('modal-historial-dias').style.display = 'flex';
 }
 
-function verDetalleDia(index) { 
-    cerrarModales(); 
-    diaVisualizando = historialDias[index]; 
-    abrirCierreCaja(true, diaVisualizando); 
-}
-
-function reenviarWhatsAppHistorico() {
-    if(!diaVisualizando) return;
-    
-    alert("PASO 1: Dale a 'Guardar como PDF' en la ventana que aparecerá.\nPASO 2: Se abrirá WhatsApp para reenviar el reporte.");
-    
-    document.querySelector('.modal-botones').style.display = 'none';
-    document.getElementById('area-impresion').style.overflowY = 'visible';
-    
-    // 🔥 TRUCO MAGICO PARA DÍAS PASADOS
-    let tituloOriginal = document.title;
-    let fechaFormateada = diaVisualizando.fecha.replace(/\//g, '_'); 
-    document.title = `REPORTE_DIA_${fechaFormateada}_V_&_S`;
-
-    setTimeout(() => {
-        window.print();
-
-        // Restaurar pantalla
-        document.title = tituloOriginal;
-        document.querySelector('.modal-botones').style.display = 'flex';
-        document.getElementById('area-impresion').style.overflowY = 'auto';
-
-        setTimeout(() => {
-            let totalGastos = 0;
-            if(diaVisualizando.gastosArr) {
-                diaVisualizando.gastosArr.forEach(g => totalGastos += g.monto);
-            }
-            
-            let efCajon = (diaVisualizando.efectivo + diaVisualizando.cajaChica) - totalGastos;
-            let textoWA = `📊 *REPORTE REENVIADO - VICIOS & SABORES* 🔥\n📅 Fecha: ${diaVisualizando.fecha}\n\n💵 *Caja Chica Inicial:* ${diaVisualizando.cajaChica} Bs\n💰 *Ingresos Efectivo:* ${diaVisualizando.efectivo} Bs\n🔴 *Gastos:* -${totalGastos} Bs\n👉 *EFECTIVO EN CAJÓN:* ${efCajon} Bs\n\n📱 *Ingresos QR:* ${diaVisualizando.qr} Bs\n📈 *TOTAL VENTAS:* ${diaVisualizando.efectivo + diaVisualizando.qr} Bs\n\n🍗 *Platos:*\n${diaVisualizando.resumenPlatos || "Sin ventas"}\n\n📎 *(Te adjunto el PDF del reporte a este mensaje).*`;
-
-            let url = `https://wa.me/59179962454?text=${encodeURIComponent(textoWA)}`;
-            window.open(url, '_blank'); 
-        }, 3000);
-    }, 100);
-}
+function verDetalleDia(index) { cerrarModales(); diaVisualizando = historialDias[index]; abrirCierreCaja(true, diaVisualizando); }
+function reenviarWhatsAppHistorico() { alert("Para reenviar, imprime el PDF manualmente desde tu navegador en esta misma ventana de reporte."); }
