@@ -229,7 +229,7 @@ function abrirModalDinamico(nombre, precioBaseParam, config) {
         }
     } 
     else if (config.tipo === 'presa') contenidoHTML += `<select class="form-select" id="cmb-presa">${config.opciones.map(op => `<option value="${op}">${op}</option>`).join('')}</select>`;
-    else if (config.tipo === 'refresco') contenidoHTML += `<select class="form-select" id="cmb-refresco"><option>Maracuyá</option><option>Limón</option><option>Canela</option></select>`;
+    else if (config.tipo === 'refresco') contenidoHTML += `<select class="form-select" id="cmb-refresco"><option>Maracuyá</option><option>Limón</option><option>Canela</option><option>Tumbo</option></select>`;
     else if (config.tipo === 'gaseosa') contenidoHTML += `<select class="form-select" id="cmb-gaseosa"><option>Coca Cola</option><option>Fanta</option><option>Sprite</option></select>`;
     
     document.getElementById('modal-dinamico-contenido').innerHTML = contenidoHTML;
@@ -504,7 +504,10 @@ function abrirCierreCaja(esHistorico = false, historicoData = null, modoSoloVist
     vRender.forEach(v => {
         let textoFicha = v.ficha ? ` - Ficha #${v.ficha}` : '';
         let txtCliente = v.cliente ? `<strong style="color:#005580; font-size:1.1rem;">👤 ${v.cliente}</strong><br>` : '';
-        let etiquetaMesa = v.tipoLugar ? `<strong>[${v.tipoLugar.toUpperCase()}${textoFicha}]</strong><br>` : '';
+        
+        // DISEÑO DESTACADO PARA MESA / LLEVAR
+        let infoMesa = v.mesa ? ` | MESA: ${v.mesa}` : '';
+        let etiquetaMesa = v.tipoLugar ? `<div style="background:#fff3e6; padding:4px 8px; border-radius:5px; color:#ff4500; border:1px solid #ff4500; display:inline-block; margin-bottom:5px; font-weight:bold; font-size:0.95rem;">[${v.tipoLugar.toUpperCase()}${infoMesa}${textoFicha}]</div><br>` : '';
         
         let txtVuelto = "";
         let btnSaldar = "";
