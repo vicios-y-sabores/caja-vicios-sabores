@@ -55,8 +55,6 @@ body { background-color: #050505; color: #fff; display: flex; flex-direction: co
 .metodo-pago input[type="radio"]:checked + label[for="pago-efectivo"] { background: #ffaa00; border-color: #ff4500; color: #000; }
 .metodo-pago input[type="radio"]:checked + label[for="pago-qr"] { background: #25d366; border-color: #128C7E; color: white; } 
 .metodo-pago input[type="radio"]:checked + label[for="pago-mixto"] { background: #8e44ad; border-color: #5b2c6f; color: white; }
-/* NUEVO COLOR PARA PAGO MIXTO */
-.metodo-pago input[type="radio"]:checked + label[for="pago-mixto"] { background: #8e44ad; border-color: #5b2c6f; color: white; }
 
 .qr-container { display: none; text-align: center; margin-bottom: 10px; cursor: pointer; transition: transform 0.2s; }
 .qr-container:hover { transform: scale(1.05); }
@@ -94,47 +92,97 @@ body { background-color: #050505; color: #fff; display: flex; flex-direction: co
 .tr-anulada { background-color: #ffe6e6; text-decoration: line-through; color: #888; }
 .caja-info { display: flex; justify-content: space-between; background: #eee; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; font-size: 1.1rem;}
 .caja-info.resaltado { border-left: 5px solid #ff4500; }
-.contenedor-tabla { overflow-y: auto; max-height: 250px; } /* Clase que el PDF eliminará */
+.contenedor-tabla { overflow-y: auto; max-height: 250px; }
 
 /* HISTORIAL GENERAL */
 .dia-card { background: #f9f9f9; border: 1px solid #ccc; padding: 15px; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
 .dia-card:hover { border-color: #ff4500; background: #fff3e6; }
 .dia-card-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem; color: #d35400; }
 
+/* TARJETAS DE COCINA */
+.tarjeta-cocina { background: #fff; border: 2px solid #e74c3c; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.tarjeta-cocina h3 { background: #e74c3c; color: white; padding: 5px 10px; border-radius: 5px; margin-top: -5px; margin-left: -5px; margin-right: -5px; margin-bottom: 10px; font-size: 1.2rem; }
+.item-cocina { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 8px 0; font-family: sans-serif;}
+.item-cocina.entregado { text-decoration: line-through; color: #aaa; background: #f9f9f9; }
+.btn-check-item { background: #2ecc71; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+
+/* INVENTARIO */
+.inv-fila { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: #f4f4f4; padding: 8px; border-radius: 5px; }
+.inv-fila input { width: 80px; text-align: center; font-weight: bold; border: 1px solid #ccc; border-radius: 5px; padding: 5px;}
+
 /* =========================================
-   MAGIA PARA PDF MULTI-PÁGINA (NO BORRAR)
+   SISTEMA DE DOBLE IMPRESIÓN (PDF CIERRE VS COMANDA TÉRMICA GIGANTE)
    ========================================= */
 @media print {
-    /* 1. Quitamos los límites de altura de TODA la página */
-    html, body, .modal-overlay, .modal, #area-impresion, .contenedor-tabla {
-        height: auto !important;
-        max-height: none !important;
-        overflow: visible !important;
-        position: static !important;
+    /* ----- 1. SI ESTAMOS CERRANDO CAJA (PDF A4 NORMAL) ----- */
+    body.modo-cierre html, body.modo-cierre, body.modo-cierre .modal-overlay, body.modo-cierre .modal, body.modo-cierre #area-impresion, body.modo-cierre .contenedor-tabla {
+        height: auto !important; max-height: none !important; overflow: visible !important; position: static !important;
+    }
+    body.modo-cierre .header, body.modo-cierre .pos-container, body.modo-cierre .modal-botones, body.modo-cierre .col-accion, body.modo-cierre #impresion-comanda-container { display: none !important; }
+    body.modo-cierre .modal-overlay { background: white !important; align-items: flex-start !important; }
+    body.modo-cierre .modal { box-shadow: none !important; border: none !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+    body.modo-cierre .tabla-historial { page-break-inside: auto; }
+    body.modo-cierre tr { page-break-inside: avoid; page-break-after: auto; }
+
+    /* ----- 2. SI ESTAMOS IMPRIMIENDO COMANDA 80MM (TAMAÑO GIGANTE) ----- */
+    @page { 
+        margin: 0 !important; /* MAGIA: Esto elimina por completo los textos grises de URL y Fecha de Google Chrome */
+    } 
+    
+    body.modo-comanda { 
+        margin: 0; padding: 0; background: white; 
+        width: 100% !important; /* Magia: Obligamos a que use todo el ancho de tu impresora */
+    }
+    body.modo-comanda * { visibility: hidden; margin:0; padding:0; }
+    body.modo-comanda #impresion-comanda-container, body.modo-comanda #impresion-comanda-container * { visibility: visible; }
+    
+    body.modo-comanda #impresion-comanda-container {
+        position: absolute; left: 0; top: 0;
+        width: 100%; /* Llenar todo el rollo */
+        padding: 2mm; /* Un mínimo margen de seguridad para la tinta */
+        box-sizing: border-box;
+        display: block !important;
     }
     
-    /* 2. Ocultamos el fondo negro y el sistema de atrás */
-    .header, .pos-container, .modal-botones, .col-accion {
-        display: none !important;
+    body.modo-comanda #ticket-termico {
+        font-family: Arial, Helvetica, sans-serif;
+        color: #000; 
+        width: 100%;
     }
 
-    /* 3. Ponemos el fondo blanco limpio */
-    .modal-overlay {
-        background: white !important;
-        align-items: flex-start !important;
+    body.modo-comanda .ticket-titulo { font-size: 30px; font-weight: 900; text-align: center; border-bottom: 3px solid black; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase;}
+    body.modo-comanda .ticket-info { font-size: 22px; font-weight: bold; margin-bottom: 5px; text-align: center;}
+    body.modo-comanda .ticket-cliente { font-size: 26px; font-weight: 900; margin-bottom: 10px; text-align: center; border-bottom: 2px dashed black; padding-bottom: 10px;}
+    
+    body.modo-comanda .ticket-ficha { font-size: 48px; font-weight: 900; text-align: center; margin: 15px 0; border: 4px solid black; padding: 10px; border-radius: 10px;}
+    body.modo-comanda .ticket-mesa { font-size: 45px; font-weight: 900; text-align: center; margin: 15px 0; background: black; color: white; padding: 10px; -webkit-print-color-adjust: exact; print-color-adjust: exact;}
+    
+    body.modo-comanda .ticket-seccion { font-size: 32px; font-weight: 900; border-bottom: 3px dashed black; border-top: 3px dashed black; padding: 10px 0; margin-top: 20px; margin-bottom: 15px; text-align: center; text-transform: uppercase; background: #eee; -webkit-print-color-adjust: exact; print-color-adjust: exact;}
+    
+    /* Layout expansivo para que llene la derecha */
+    body.modo-comanda .item-print { 
+        display: flex; 
+        align-items: flex-start; 
+        margin-bottom: 15px; 
+        border-bottom: 2px dashed #999; 
+        padding-bottom: 10px; 
+        page-break-inside: avoid;
+        width: 100%;
     }
-
-    /* 4. Estiramos la ventana al 100% de la hoja y quitamos sombras */
-    .modal {
-        box-shadow: none !important;
-        border: none !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
+    body.modo-comanda .item-cant { 
+        font-size: 45px; 
+        font-weight: 900; 
+        min-width: 80px; /* Espacio inmenso para el número */
+        text-align: left;
     }
-
-    /* 5. Le decimos a las tablas que se corten sin partir el texto a la mitad */
-    .tabla-historial { page-break-inside: auto; }
-    tr { page-break-inside: avoid; page-break-after: auto; }
+    body.modo-comanda .item-detalle { 
+        width: calc(100% - 80px); 
+        display: flex; 
+        flex-direction: column;
+        text-align: left;
+    }
+    body.modo-comanda .item-nombre { font-size: 35px; font-weight: bold; line-height: 1.1; display: block;}
+    body.modo-comanda .item-nota { font-size: 28px; font-weight: bold; font-style: italic; margin-top: 5px; color: #222;}
+    
+    body.modo-comanda .divisor { border-top: 3px solid black; margin: 20px 0; }
 }
