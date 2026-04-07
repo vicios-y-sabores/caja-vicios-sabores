@@ -11,14 +11,16 @@
 <body>
 
     <header class="header">
-        <h1>🔥 VICIOS & SABORES - POS</h1>
-        <link rel="icon" href="img/logo1.png" type="image/jpeg">    
-         
+        <h1>🔥 VICIOS & SABORES</h1>
+        
         <div class="caja-chica-display" onclick="modificarCajaChica()" title="Clic para modificar">
             💰 <span id="lbl-caja-chica-header">Caja: 0 Bs</span>
         </div>
 
         <div class="header-btns">
+            <button class="btn-top" style="background:#8e44ad; border-color:#fff;" onclick="abrirCocina()">🧑‍🍳 Cocina</button>
+            <button class="btn-top" style="background:#2ecc71; border-color:#fff; color:black;" onclick="abrirInventario()">📦 Stock</button>
+            
             <button class="btn-top" onclick="abrirHistorialDias()">📅 Días Pasados</button>
             <button class="btn-top btn-gastos" onclick="abrirGastos()">💸 Gastos</button>
             <button class="btn-top btn-historial-hoy" onclick="verHistorialHoy()">📋 Historial Hoy</button>
@@ -30,7 +32,7 @@
     <div class="pos-container">
         <div class="menu-panel">
             <div class="categoria">
-                <h2>🍗 ALITAS (Distribución Estricta)</h2>
+                <h2>🍗 ALITAS</h2>
                 <div class="botones-grid">
                     <button class="btn-item" onclick="abrirModalDinamico('Alitas 4 Pz', 19, {tipo: 'alitas', piezas: 4})">Alitas 4 Pz <span class="precio">19 Bs</span></button>
                     <button class="btn-item" onclick="abrirModalDinamico('Alitas 6 Pz', 26, {tipo: 'alitas', piezas: 6})">Alitas 6 Pz <span class="precio">26 Bs</span></button>
@@ -41,8 +43,8 @@
             <div class="categoria">
                 <h2>🍗 POLLO BROASTER</h2>
                 <div class="botones-grid">
-                    <button class="btn-item" onclick="abrirModalDinamico('Económico ⅛ (15 Bs)', 16, {tipo: 'presa', opciones: ['Pierna', 'Entre Pierna']})">Económico ⅛ <br><small>Pierna / Entre Pierna</small> <span class="precio">16 Bs</span></button>
-                    <button class="btn-item" onclick="abrirModalDinamico('Económico ⅛ (17 Bs)', 18, {tipo: 'presa', opciones: ['Pecho', 'Ala']})">Económico ⅛ <br><small>Pecho / Ala</small> <span class="precio">18 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Económico ⅛', 16, {tipo: 'presa', opciones: ['Cualquiera (Pierna o Entre Pierna)', 'Pierna', 'Entre Pierna']})">Económico ⅛ <br><small>Pierna / Entre Pierna</small> <span class="precio">16 Bs</span></button>
+                    <button class="btn-item" onclick="abrirModalDinamico('Económico ⅛', 18, {tipo: 'presa', opciones: ['Cualquiera (Pecho o Ala)', 'Pecho', 'Ala']})">Económico ⅛ <br><small>Pecho / Ala</small> <span class="precio">18 Bs</span></button>
                     <button class="btn-item" onclick="abrirModalDinamico('Cuarto de Pollo (Pierna y Entre Pierna)', 26, {tipo: 'normal'})">Cuarto de Pollo <br><small>Pierna y Entre Pierna</small> <span class="precio">26 Bs</span></button>
                     <button class="btn-item" onclick="abrirModalDinamico('Cuarto de Pollo (Pecho y Ala)', 28, {tipo: 'normal'})">Cuarto de Pollo <br><small>Pecho y Ala</small> <span class="precio">28 Bs</span></button>
                 </div>
@@ -67,7 +69,7 @@
             </div>
 
             <div class="categoria">
-                <h2>🥤 BOTELLAS (Elige el Sabor)</h2>
+                <h2>🥤 BOTELLAS</h2>
                 <div class="botones-grid">
                     <button class="btn-item" onclick="abrirModalDinamico('Gaseosa Mini', 3, {tipo: 'gaseosa'})">Gaseosa Mini <span class="precio">3 Bs</span></button>
                     <button class="btn-item" onclick="abrirModalDinamico('Gaseosa Popular', 7, {tipo: 'gaseosa'})">Gaseosa Popular <span class="precio">7 Bs</span></button>
@@ -159,6 +161,11 @@
     </div>
 
     <div id="modales-container"></div>
+    
+    <div id="impresion-comanda-container" style="display: none;">
+        <div id="ticket-termico"></div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
