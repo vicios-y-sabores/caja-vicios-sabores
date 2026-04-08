@@ -1,3 +1,16 @@
+// --- CONFIGURACIÓN DE FIREBASE ---
+const firebaseConfig = {
+    apiKey: "AIzaSyASjTY3Vt2IQ_QpKNcFNffamr35x2z8iz0",
+    authDomain: "vicios-y-sabores-db.firebaseapp.com",
+    databaseURL: "https://vicios-y-sabores-db-default-rtdb.firebaseio.com",
+    projectId: "vicios-y-sabores-db",
+    storageBucket: "vicios-y-sabores-db.firebasestorage.app",
+    messagingSenderId: "725484380661",
+    appId: "1:725484380661:web:80a8a7d355166cee48c0bc"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
 // --- SISTEMA DE LOGIN Y ROLES ---
 let usuarioActual = JSON.parse(sessionStorage.getItem('vicios_usuarioActivo'));
 
@@ -10,7 +23,7 @@ function cerrarSesion() {
     }
 }
 
-// --- BASE DE DATOS LOCAL ---
+// --- BASE DE DATOS LOCAL Y SINCRONIZACIÓN NUBE ---
 let estadoCaja = JSON.parse(localStorage.getItem('vicios_estadoCaja')) || { abierta: false, cajaChica: 0, siguienteFicha: 1 };
 let ventasHoy = JSON.parse(localStorage.getItem('vicios_ventasHoy')) || [];
 let gastosHoy = JSON.parse(localStorage.getItem('vicios_gastosHoy')) || [];
@@ -21,6 +34,63 @@ let inventarioDB = JSON.parse(localStorage.getItem('vicios_inventarioDB')) || {}
 let pedidoActual = []; 
 let totalActual = 0;
 let cfgActual = null; let nombreItemBase = ""; let precioBase = 0; let diaVisualizando = null;
+// --- BOTÓN PROVISIONAL PARA MIGRAR PDFS AL HISTORIAL Y A LA NUBE ---
+window.migrarPdfsAFirebase = function() {
+    // Seguridad: Solo Alejandro puede hacer esto
+    if(usuarioActual.rol !== "admin") {
+        alert("Solo el administrador puede migrar los datos.");
+        return;
+    }
+
+    if(!confirm("¿Subir el historial de los 10 PDFs antiguos a la base de datos? (Solo hazlo una vez)")) return;
+    
+    // Aquí están los datos matemáticos extraídos de tus PDFs
+    const pdfsData = [
+        { fecha: "01/03/2026", cajaChica: 126, efectivo: 1367, qr: 347, total: 1714, resumenPlatos: "Historial recuperado de PDF", gastosArr: [], ventasArr: [] },
+        { fecha: "04/03/2026 (T1)", cajaChica: 61, efectivo: 338, qr: 146, total: 484, resumenPlatos: "Historial recuperado de PDF", gastosArr: [], ventasArr: [] },
+        { fecha: "04/03/2026 (T2)", cajaChica: 64, efectivo: 597, qr: 135, total: 732, resumenPlatos: "Historial recuperado de PDF", gastosArr: [], ventasArr: [] },
+        { fecha: "06/03/2026", cajaChica: 60, efectivo: 360, qr: 58, total: 418, resumenPlatos: "Historial recuperado de PDF", gastosArr: [], ventasArr: [] },
+        { fecha: "08/03/2026", cajaChica: 150, efectivo: 1229, qr: 651, total: 1880, resumenPlatos: "Historial recuperado de PDF", gastosArr: [], ventasArr: [] },
+        { fecha: "03/04/2026 (T1)", cajaChica: 0, efectivo: 561, qr: 82, total: 643, resumenPlatos: "Historial recuperado de PDF", gastosArr: [], ventasArr: [] },
+        { fecha: "03/04/2026 (T2)", cajaChica: 85, efectivo: 792, qr: 0, total: 792, resumenPlatos: "Historial recuperado de PDF", gastosArr: [], ventasArr: [] },
+        { fecha: "04/04/2026", cajaChica: 0, efectivo: 590, qr: 336, total: 926, resumenPlatos: "Historial recuperado de PDF", gastosArr: [], ventasArr: [] },
+        { fecha: "05/04/2026", cajaChica: 0, efectivo: 1330, qr: 267, total: 1597, resumenPlatos: "Historial recuperado de PDF", gastosArr: [], ventasArr: [] },
+        { fecha: "07/04/2026", cajaChica: 65, efectivo: 341, qr: 132, total: 473, resumenPlatos: "Historial recuperado de PDF", gastosArr: [], ventasArr: [] }
+    ];
+
+    // Inyectamos los datos asegurándonos de no duplicar
+    pdfsData.forEach(pdfDia => {
+        let existe = historialDias.find(d => d.fecha === pdfDia.fecha);
+        if(!existe) historialDias.push(pdfDia);
+    });
+
+    // Guardamos en la computadora
+    localStorage.setItem('vicios_historialDias', JSON.stringify(historialDias));
+    
+    // Si ya activaste Firebase, esto lo manda a la nube inmediatamente
+    if (typeof syncToFirebase === "function") {
+        syncToFirebase(); 
+    }
+    
+    alert("✅ ¡Éxito! Todos los datos de tus PDFs ya están en el Historial de Días Pasados.");
+    
+    // Ocultamos el botón para que no estorbe más
+    document.getElementById('btn-migrar-pdfs').style.display = 'none';
+}
+
+// ACTUALIZACIÓN CONSTANTE EN LA NUBE
+function syncToFirebase() {
+    if (usuarioActual) {
+        db.ref('restaurante_estado').set({
+            estadoCaja: estadoCaja,
+            ventasHoy: ventasHoy,
+            gastosHoy: gastosHoy,
+            historialDias: historialDias,
+            clientesDB: clientesDB,
+            inventarioDB: inventarioDB
+        });
+    }
+}
 
 function actualizarTituloFicha() {
     let nroFicha = estadoCaja.siguienteFicha || 1;
@@ -66,7 +136,7 @@ document.getElementById('modales-container').innerHTML = `
     <div class="modal-overlay" id="modal-qr-flotante" onclick="cerrarQRFlotante()">
         <div class="modal" style="max-width: 450px; text-align: center; background: #fff;">
             <h2 style="color:#25d366; border-bottom:none; margin-bottom:5px;">📱 Escanea para Pagar</h2>
-            <img src="img/qr.jpg" alt="QR" style="width: 100%; max-width: 350px; border: 4px solid #25d366; border-radius: 15px;">
+            <img src="img/qr.jpg" alt="QR" style="width: 100%; max-width: 350px; border: 4px solid #25d366; border-radius: 15px;" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg'">
             <p style="margin-top:20px; color:#000; font-weight:bold; font-size:1.5rem;">A cobrar: <span id="qr-total-flotante" style="color:#ff0000; font-size:2rem;">0 Bs.</span></p>
             <button class="btn-accion" style="margin-top:15px; background:#333;" onclick="cerrarQRFlotante()">Ocultar QR</button>
         </div>
@@ -113,6 +183,12 @@ document.getElementById('modales-container').innerHTML = `
                 <div class="caja-info"><span>Caja Chica Inicial:</span> <span id="resumen-caja-chica">0 Bs.</span></div>
                 <div class="caja-info" style="background: #e6f7ff;"><span>Ingresos Efectivo (Ventas):</span> <span id="resumen-ventas-efectivo" style="color:#005580;">0 Bs.</span></div>
                 <div class="caja-info" style="background: #e6ffe6;"><span>Ingresos QR (Banco):</span> <span id="resumen-qr" style="color:#008000;">0 Bs.</span></div>
+                
+                <div class="caja-info" style="background: #fff8e1; border: 1px solid #ffcc00;">
+                    <span>📈 TOTAL VENTAS (Efectivo + QR):</span> 
+                    <span id="resumen-total-ventas" style="color:#b8860b; font-size:1.2rem; font-weight:bold;">0 Bs.</span>
+                </div>
+
                 <div class="caja-info" style="background: #ffe6e6; color:#dc3545;"><span>Gastos del Día:</span> <span id="resumen-gastos-cierre">- 0 Bs.</span></div>
                 
                 <div class="caja-info resaltado"><span>EFECTIVO FINAL EN CAJÓN:</span> <span id="resumen-cajon-final" style="color:#ff4500; font-size:1.3rem;">0 Bs.</span></div>
@@ -151,10 +227,42 @@ window.onload = function() {
         document.querySelector('.caja-chica-display').onclick = null;
         document.querySelector('.caja-chica-display').style.cursor = 'default';
     }
+    
+    // ESCUCHA EN TIEMPO REAL DESDE CUALQUIER DISPOSITIVO
+    db.ref('restaurante_estado').on('value', (snapshot) => {
+        if(snapshot.exists()) {
+            let data = snapshot.val();
+            estadoCaja = data.estadoCaja || { abierta: false, cajaChica: 0, siguienteFicha: 1 };
+            ventasHoy = data.ventasHoy || [];
+            gastosHoy = data.gastosHoy || [];
+            historialDias = data.historialDias || [];
+            clientesDB = data.clientesDB || [];
+            inventarioDB = data.inventarioDB || {};
+            
+            localStorage.setItem('vicios_estadoCaja', JSON.stringify(estadoCaja));
+            localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy));
+            localStorage.setItem('vicios_gastosHoy', JSON.stringify(gastosHoy));
+            localStorage.setItem('vicios_historialDias', JSON.stringify(historialDias));
+            localStorage.setItem('vicios_clientesDB', JSON.stringify(clientesDB));
+            localStorage.setItem('vicios_inventarioDB', JSON.stringify(inventarioDB));
+
+            actualizarHeaderCaja(); 
+            actualizarTituloFicha();
+            
+            // Actualizar la pantalla de cocina si alguien la está mirando en otro dispositivo
+            if (document.getElementById('modal-cocina').style.display === 'flex') {
+                abrirCocina();
+            }
+        }
+    });
+
     cargarClientes(); 
 
-    if (!estadoCaja.abierta) document.getElementById('modal-apertura').style.display = 'flex';
-    else { actualizarHeaderCaja(); actualizarTituloFicha(); }
+    // Solo pide abrir caja si realmente está cerrada en la base de datos
+    setTimeout(() => {
+        if (!estadoCaja.abierta) document.getElementById('modal-apertura').style.display = 'flex';
+        else { actualizarHeaderCaja(); actualizarTituloFicha(); }
+    }, 1000); // Pequeño retraso para dar tiempo a Firebase a sincronizar primero
 };
 
 function actualizarHeaderCaja() { document.getElementById('lbl-caja-chica-header').innerText = `Caja Chica: ${estadoCaja.cajaChica} Bs`; }
@@ -166,7 +274,25 @@ function abrirCaja() {
     localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy));
     localStorage.setItem('vicios_gastosHoy', JSON.stringify(gastosHoy));
     localStorage.setItem('vicios_inventarioDB', JSON.stringify(inventarioDB));
+    syncToFirebase();
     actualizarHeaderCaja(); actualizarTituloFicha(); cerrarModales();
+}
+
+window.modificarCajaChica = function() {
+    if (usuarioActual.rol !== "admin") return;
+    let pass = prompt("Contraseña maestra para modificar Caja Chica:");
+    if (pass === "Terceros_V&S") {
+        let nuevoMonto = prompt("Monto exacto en Bs de la Caja Chica actual:", estadoCaja.cajaChica);
+        if (nuevoMonto !== null && !isNaN(nuevoMonto)) {
+            estadoCaja.cajaChica = parseFloat(nuevoMonto);
+            localStorage.setItem('vicios_estadoCaja', JSON.stringify(estadoCaja));
+            syncToFirebase();
+            actualizarHeaderCaja(); 
+            alert("✅ Caja Chica actualizada correctamente.");
+        }
+    } else if (pass !== null) {
+        alert("❌ Contraseña incorrecta.");
+    }
 }
 
 const itemsTrackeables = [
@@ -192,6 +318,7 @@ function guardarInventario() {
         if(val !== "") inventarioDB[item] = parseInt(val); else delete inventarioDB[item];
     });
     localStorage.setItem('vicios_inventarioDB', JSON.stringify(inventarioDB));
+    syncToFirebase();
     alert("📦 Stock de presas actualizado"); cerrarModales();
 }
 
@@ -277,6 +404,29 @@ function restaurarStockAnulado(items) {
     }
     localStorage.setItem('vicios_inventarioDB', JSON.stringify(inventarioDB));
 }
+
+// Gastos
+function abrirGastos() { renderizarGastos(); document.getElementById('modal-gastos').style.display = 'flex'; }
+function agregarGasto() {
+    let detalle = document.getElementById('input-gasto-detalle').value.trim();
+    let monto = parseFloat(document.getElementById('input-gasto-monto').value);
+    if(!detalle || isNaN(monto) || monto <= 0) return;
+    gastosHoy.push({ id: Date.now(), detalle, monto });
+    localStorage.setItem('vicios_gastosHoy', JSON.stringify(gastosHoy));
+    syncToFirebase();
+    document.getElementById('input-gasto-detalle').value = ""; document.getElementById('input-gasto-monto').value = "";
+    renderizarGastos();
+}
+function eliminarGasto(id) { gastosHoy = gastosHoy.filter(g => g.id !== id); localStorage.setItem('vicios_gastosHoy', JSON.stringify(gastosHoy)); syncToFirebase(); renderizarGastos(); }
+function renderizarGastos() {
+    const lista = document.getElementById('lista-gastos'); let total = 0; lista.innerHTML = '';
+    gastosHoy.forEach(g => {
+        total += g.monto;
+        lista.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px dashed #ccc;"><span style="color:#000;">${g.detalle}</span><div style="display:flex; gap:10px;"><strong style="color:#dc3545;">${g.monto} Bs</strong><button style="color:red; background:none; border:none; cursor:pointer;" onclick="eliminarGasto(${g.id})">❌</button></div></div>`;
+    });
+    document.getElementById('total-gastos-display').innerText = total;
+}
+
 
 function abrirModalDinamico(nombre, precioBaseParam, config) {
     cfgActual = config; nombreItemBase = nombre; precioBase = precioBaseParam;
@@ -416,6 +566,7 @@ function procesarPago() {
     ventasHoy.push(nuevaVenta); descontarStockPagado(nuevaVenta.items);
     estadoCaja.siguienteFicha = nroFicha + 1; actualizarTituloFicha();
     localStorage.setItem('vicios_estadoCaja', JSON.stringify(estadoCaja)); localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy));
+    syncToFirebase(); // GRABA INMEDIATAMENTE EN LA NUBE
 
     pedidoActual = []; document.getElementById('monto-recibido').value = ''; document.getElementById('monto-mixto-qr').value = ''; document.getElementById('monto-mixto-efectivo').value = '';
     document.getElementById('input-cliente').value = ''; document.getElementById('input-mesa').value = '';
@@ -433,7 +584,6 @@ function imprimirComanda(v) {
     let itemsMesa = v.items.filter(i => i.tipoConsumo === 'Mesa');
     let itemsLlevar = v.items.filter(i => i.tipoConsumo === 'Llevar');
 
-    // AÑADIDO: EL NOMBRE DEL CLIENTE AQUÍ
     let html = `
         <div class="ticket-titulo">VICIOS & SABORES</div>
         <div class="ticket-info">FECHA: ${new Date().toLocaleDateString()} | ${v.hora}</div>
@@ -498,7 +648,15 @@ function abrirCocina() {
     document.getElementById('modal-cocina').style.display = 'flex';
 }
 
-window.marcarItemEntregado = function(ventaId, itemIndex) { let v = ventasHoy.find(x => x.id === ventaId); if(v && v.items[itemIndex]) { v.items[itemIndex].entregado = true; localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy)); abrirCocina(); } }
+window.marcarItemEntregado = function(ventaId, itemIndex) { 
+    let v = ventasHoy.find(x => x.id === ventaId); 
+    if(v && v.items[itemIndex]) { 
+        v.items[itemIndex].entregado = true; 
+        localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy)); 
+        syncToFirebase(); // GRABA LA ENTREGA PARA OTROS DISPOSITIVOS
+        abrirCocina(); 
+    } 
+}
 
 function generarReporteData(ventasData) {
     let ef = 0, qr = 0, conteo = {};
@@ -538,12 +696,13 @@ function abrirCierreCaja(esHistorico = false, historicoData = null, modoSoloVist
     });
 
     document.getElementById('resumen-caja-chica').innerText = cChica + ' Bs.'; document.getElementById('resumen-ventas-efectivo').innerText = dataRep.efectivo + ' Bs.'; document.getElementById('resumen-qr').innerText = dataRep.qr + ' Bs.'; document.getElementById('resumen-gastos-cierre').innerText = `- ${totalGastos} Bs.`; document.getElementById('resumen-cajon-final').innerText = ((dataRep.efectivo + cChica) - totalGastos) + ' Bs.';
+    
     let htmlPlatos = Object.entries(dataRep.conteoPlatos).map(([nom, cant]) => `<strong>[${cant}]</strong> ${nom}`).join('<br>'); document.getElementById('resumen-platos').innerHTML = htmlPlatos || "No hay ventas registradas.";
     document.getElementById('modal-cierre').style.display = 'flex';
 }
 
-window.saldarVuelto = function(id) { if(confirm("✔️ ¿Confirmas que acabas de entregarle el dinero que faltaba?")) { let v = ventasHoy.find(x => x.id === id); if(v) v.vueltoPendiente = 0; localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy)); abrirCierreCaja(false, null, document.getElementById('titulo-modal-cierre').innerText.includes("Historial")); } }
-function anularVenta(id) { if(confirm("🗑️ ¿Anular esta venta?\n\nEl dinero se descontará de la caja y el stock se devolverá.")) { let v = ventasHoy.find(x => x.id === id); if(v) { v.anulada = true; restaurarStockAnulado(v.items); } localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy)); abrirCierreCaja(false, null, document.getElementById('titulo-modal-cierre').innerText.includes("Historial")); } }
+window.saldarVuelto = function(id) { if(confirm("✔️ ¿Confirmas que acabas de entregarle el dinero que faltaba?")) { let v = ventasHoy.find(x => x.id === id); if(v) v.vueltoPendiente = 0; localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy)); syncToFirebase(); abrirCierreCaja(false, null, document.getElementById('titulo-modal-cierre').innerText.includes("Historial")); } }
+function anularVenta(id) { if(confirm("🗑️ ¿Anular esta venta?\n\nEl dinero se descontará de la caja y el stock se devolverá.")) { let v = ventasHoy.find(x => x.id === id); if(v) { v.anulada = true; restaurarStockAnulado(v.items); } localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy)); syncToFirebase(); abrirCierreCaja(false, null, document.getElementById('titulo-modal-cierre').innerText.includes("Historial")); } }
 
 function enviarWhatsAppYGuardar() {
     if(!confirm("🚨 ¿CERRAR EL DÍA DE HOY?\n\nGenerará el PDF, enviará WhatsApp y pondrá la caja a 0.")) return;
@@ -561,6 +720,7 @@ function enviarWhatsAppYGuardar() {
             let textoWA = `📊 *CIERRE DE CAJA - VICIOS & SABORES* 🔥\n📅 Fecha: ${fecha}\n\n💵 *Caja Chica Inicial:* ${estadoCaja.cajaChica} Bs\n💰 *Ingresos Efectivo:* ${dataRep.efectivo} Bs\n🔴 *Gastos:* -${totalGastos} Bs\n👉 *EFECTIVO EN CAJÓN:* ${efCajon} Bs\n${txtDeuda}\n📱 *Ingresos QR:* ${dataRep.qr} Bs\n📈 *TOTAL VENTAS:* ${dataRep.efectivo + dataRep.qr} Bs\n\n🍗 *Platos:* ${resumenPlatosTexto || "Sin ventas"}\n\n📎 *(Te adjunto el PDF).*`;
             estadoCaja.abierta = false; estadoCaja.cajaChica = 0; estadoCaja.siguienteFicha = 1; ventasHoy = []; gastosHoy = []; inventarioDB = {};
             localStorage.setItem('vicios_estadoCaja', JSON.stringify(estadoCaja)); localStorage.setItem('vicios_ventasHoy', JSON.stringify(ventasHoy)); localStorage.setItem('vicios_gastosHoy', JSON.stringify(gastosHoy)); localStorage.setItem('vicios_inventarioDB', JSON.stringify(inventarioDB));
+            syncToFirebase(); // GRABA EL CIERRE PARA TODOS
             window.location.href = `https://wa.me/59179962454?text=${encodeURIComponent(textoWA)}`; 
         }, 3000);
     }, 100); 
