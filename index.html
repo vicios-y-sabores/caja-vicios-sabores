@@ -6,6 +6,10 @@
     <title>Login | Vicios & Sabores</title>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" href="img/logo1.png" type="image/jpeg"> 
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Oswald', sans-serif; }
         body { background-color: #050505; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; background-image: radial-gradient(circle at center, #3a0d00 0%, #050505 100%); }
@@ -41,7 +45,6 @@
     </div>
 
     <script>
-        // Bases de datos de usuarios (Simulada para entorno local)
         const usuarios = {
             "alejandro": { pass: "admin123", rol: "admin", nombre: "Alejandro (Admin)" },
             "caja1": { pass: "vicios2026", rol: "cajero", nombre: "Caja Principal" }
@@ -53,9 +56,8 @@
             let errorMsg = document.getElementById('error-login');
 
             if (usuarios[user] && usuarios[user].pass === pass) {
-                // Guardamos la sesión iniciada
                 sessionStorage.setItem('vicios_usuarioActivo', JSON.stringify(usuarios[user]));
-                window.location.href = 'caja.html'; // Redirigir al POS
+                window.location.href = 'caja.html';
             } else {
                 errorMsg.style.display = 'block';
             }
